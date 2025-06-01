@@ -1,0 +1,49 @@
+Bootstrap: docker
+From: python:3.11-slim
+
+%environment
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/app
+    export PORT=8000
+
+%post
+    # Install system dependencies
+    apt-get update && apt-get install -y \
+        gcc \
+        g++ \
+        curl \
+        fakeroot \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Create app directory
+    mkdir -p /app
+    mkdir -p /app/uploads /app/logs /app/chroma_data
+
+    # Use fakeroot for permissions-sensitive operations
+    fakeroot bash -c "
+        # Copy and install Python dependencies
+        mkdir -p /app
+        touch /app/requirements.txt
+    "
+
+    # Copy and install Python dependencies
+    COPY requirements.txt /app/
+    pip install --no-cache-dir --upgrade pip
+    pip install --no-cache-dir -r /app/requirements.txt
+
+    # Download SpaCy and NLTK models
+    python -m spacy download fr_core_news_sm
+    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+
+%files
+    # Copy the entire backend directory
+    . /app
+
+%runscript
+    cd /app
+    exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} "$@"
+
+%startscript
+    cd /app
+    exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --reload 

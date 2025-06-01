@@ -1,0 +1,109 @@
+version: "3.8"
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: uqar_postgres
+    environment:
+      POSTGRES_DB: uqar_db
+      POSTGRES_USER: uqar_user
+      POSTGRES_PASSWORD: uqar_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - uqar_network
+
+  # ChromaDB pour les embeddings
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: uqar_chromadb
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    volumes:
+      - chromadb_data:/chroma/chroma
+    ports:
+      - "8000:8000"
+    networks:
+      - uqar_network
+
+  # Ollama pour les modèles LLM (compatible Apple Silicon)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: uqar_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - uqar_network
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: uqar_backend
+    environment:
+      - DATABASE_URL=postgresql://uqar_user:uqar_password@postgres:5432/uqar_db
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - OLLAMA_HOST=ollama
+      - OLLAMA_PORT=11434
+      - OLLAMA_MODEL=tinyllama
+      - JWT_SECRET_KEY=af477b8d25c0527311f097b7098bf98c60b34a6030294231574358ee4ecf4822
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+      - DEBUG=true
+    volumes:
+      - ./backend:/app
+      - uploaded_files:/app/uploads
+    ports:
+      - "8080:8000"
+    depends_on:
+      - postgres
+      - chromadb
+      - ollama
+    networks:
+      - uqar_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: uqar_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - uqar_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  chromadb_data:
+  ollama_data:
+  uploaded_files:
+
+networks:
+  uqar_network:
+    driver: bridge

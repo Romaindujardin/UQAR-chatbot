@@ -1,0 +1,19 @@
+Bootstrap: docker
+From: ollama/ollama:latest
+
+%environment
+    export OLLAMA_HOST=0.0.0.0
+    export OLLAMA_PORT=11434
+    export NVIDIA_VISIBLE_DEVICES=all
+    export NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+%post
+    mkdir -p /root/.ollama
+    chmod -R 777 /root/.ollama
+
+%runscript
+    # Start ollama directly
+    exec ollama serve
+
+%startscript
+    exec ollama serve 

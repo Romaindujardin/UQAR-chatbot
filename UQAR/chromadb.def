@@ -1,0 +1,18 @@
+Bootstrap: docker
+From: chromadb/chroma:latest
+
+%environment
+    export CHROMA_SERVER_HOST=0.0.0.0
+    export CHROMA_SERVER_HTTP_PORT=8000
+
+%post
+    # Create chroma directory with appropriate permissions
+    mkdir -p /chroma/chroma
+    chmod 777 /chroma/chroma
+
+%runscript
+    # Use the docker entrypoint script directly which should handle permissions
+    exec /docker-entrypoint.sh
+
+%startscript
+    exec /docker-entrypoint.sh 

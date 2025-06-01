@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Polices personnalisées */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* Variables CSS personnalisées */
+:root {
+  --color-primary: theme("colors.primary.600");
+  --color-secondary: theme("colors.secondary.600");
+  --color-success: theme("colors.success.600");
+  --color-warning: theme("colors.warning.600");
+  --color-error: theme("colors.error.600");
+}
+
+/* Styles de base */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+/* Composants personnalisés */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+  }
+
+  .btn-outline {
+    @apply btn border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-primary-500;
+  }
+
+  .btn-danger {
+    @apply btn bg-error-600 text-white hover:bg-error-700 focus:ring-error-500;
+  }
+
+  .input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm;
+  }
+
+  .input-error {
+    @apply input border-error-300 text-error-900 placeholder-error-300 focus:ring-error-500 focus:border-error-500;
+  }
+
+  .card {
+    @apply bg-white shadow rounded-lg border border-gray-200;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  .card-body {
+    @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar-open {
+    @apply translate-x-0;
+  }
+
+  .sidebar-closed {
+    @apply -translate-x-full;
+  }
+
+  .main-content {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .main-content-expanded {
+    @apply ml-64;
+  }
+
+  .main-content-collapsed {
+    @apply ml-0;
+  }
+}
+
+/* Animations personnalisées */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s infinite;
+  }
+}
+
+/* Styles pour le markdown */
+.prose {
+  @apply max-w-none;
+}
+
+.prose h1 {
+  @apply text-2xl font-bold text-gray-900 mb-4;
+}
+
+.prose h2 {
+  @apply text-xl font-semibold text-gray-900 mb-3;
+}
+
+.prose h3 {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.prose p {
+  @apply text-gray-700 mb-4 leading-relaxed;
+}
+
+.prose ul {
+  @apply list-disc list-inside mb-4 text-gray-700;
+}
+
+.prose ol {
+  @apply list-decimal list-inside mb-4 text-gray-700;
+}
+
+.prose code {
+  @apply bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary-500 pl-4 italic text-gray-600 mb-4;
+}
+
+/* Styles pour les messages de chat */
+.chat-message {
+  @apply mb-4 animate-fade-in;
+}
+
+.chat-message-user {
+  @apply flex justify-end;
+}
+
+.chat-message-assistant {
+  @apply flex justify-start;
+}
+
+.chat-bubble {
+  @apply max-w-xs lg:max-w-md px-4 py-2 rounded-lg;
+}
+
+.chat-bubble-user {
+  @apply bg-primary-600 text-white rounded-br-none;
+}
+
+.chat-bubble-assistant {
+  @apply bg-white border border-gray-200 text-gray-900 rounded-bl-none;
+}
+
+/* Styles pour les exercices */
+.exercise-card {
+  @apply card hover:shadow-md transition-shadow duration-200;
+}
+
+.exercise-option {
+  @apply p-3 border border-gray-200 rounded-md cursor-pointer transition-colors duration-200 hover:bg-gray-50;
+}
+
+.exercise-option-selected {
+  @apply bg-primary-50 border-primary-300;
+}
+
+.exercise-option-correct {
+  @apply bg-success-50 border-success-300;
+}
+
+.exercise-option-incorrect {
+  @apply bg-error-50 border-error-300;
+}
+
+/* Styles pour les notifications */
+.toast {
+  @apply fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden;
+}
+
+/* Styles pour le loading */
+.spinner {
+  @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-600;
+  width: 1em;
+  height: 1em;
+}
+
+/* Styles pour les formulaires */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-error {
+  @apply mt-1 text-sm text-error-600;
+}
+
+.form-help {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sidebar {
+    @apply w-full;
+  }
+
+  .main-content-expanded {
+    @apply ml-0;
+  }
+}
