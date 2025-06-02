@@ -2,6 +2,15 @@
 
 Ce dépôt contient le code source et les scripts de déploiement pour l'Assistant Éducatif UQAR.
 
+## Liste des tâches
+
+### Backend (Python/FastAPI)
+- [ ] Implémenter le module cœur IA (RAG)
+
+### Frontend (Next.js)
+- [ ] Améliorer le style de chaque page
+- [ ] Implémenter le chatbot rag
+
 ## Structure du dossier
 
 - `UQAR/` : Code source principal du projet (backend et frontend)
