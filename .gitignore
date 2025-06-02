@@ -53,6 +53,8 @@ apptainer_data/
 apptainer_sandbox/
 uqar_data/
 *.sif
+# Ne pas ignorer les fichiers de définition Apptainer
+!*.def
 
 # Large data directories
 chroma_data/

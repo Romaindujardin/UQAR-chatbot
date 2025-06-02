@@ -13,6 +13,8 @@ Ce dépôt contient le code source et les scripts de déploiement pour l'Assista
 
 ## Scripts principaux
 
+- `setup-uqar.sh` : Script initial pour configurer l'environnement après clonage
+- `check-uqar.sh` : Script pour vérifier que l'environnement est correctement configuré
 - `run-uqar.sh` : Script principal pour démarrer tous les services
 - `stop-uqar.sh` : Script pour arrêter tous les services
 - `start-no-ollama.sh` : Script pour démarrer les services sans Ollama
@@ -24,7 +26,20 @@ Ce dépôt contient le code source et les scripts de déploiement pour l'Assista
 - 16 Go de RAM minimum
 - 20 Go d'espace disque libre
 
-## Démarrage rapide
+## Installation après clonage
+
+```bash
+# Configurer l'environnement (construction des images, création des dossiers, etc.)
+./setup-uqar.sh
+
+# Vérifier que tout est correctement configuré
+./check-uqar.sh
+
+# Démarrer l'application
+./run-uqar.sh
+```
+
+## Démarrage rapide (après configuration)
 
 ```bash
 # Démarrer l'application complète

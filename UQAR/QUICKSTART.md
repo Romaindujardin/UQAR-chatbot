@@ -1,17 +1,17 @@
 # 🚀 Guide de Démarrage Rapide - Assistant Éducatif UQAR
 
-## 🍎 Optimisé pour macOS Apple Silicon (M1/M2)
+## 🔧 Système Linux avec Apptainer/Singularity
 
 ## 📋 Prérequis
 
 Avant de commencer, assurez-vous d'avoir installé :
 
-- **Docker Desktop pour Mac** (version 4.0+) - [Télécharger ici](https://www.docker.com/products/docker-desktop)
+- **Apptainer/Singularity** (anciennement Singularity) - [Guide d'installation](https://apptainer.org/docs/admin/main/installation.html)
 - **Git** pour cloner le projet
-- **macOS 11+** avec puce Apple Silicon (M1/M2/M3)
-- Au moins **8 GB de RAM** et **15 GB d'espace disque libre**
+- **Pilotes NVIDIA** pour les fonctionnalités GPU
+- Au moins **16 GB de RAM** et **20 GB d'espace disque libre**
 
-> ✅ **Pas besoin de GPU NVIDIA** - Ollama fonctionne parfaitement sur les puces Apple !
+> ⚠️ Un GPU NVIDIA est fortement recommandé pour des performances optimales
 
 ## ⚡ Démarrage en 3 étapes
 
@@ -20,26 +20,33 @@ Avant de commencer, assurez-vous d'avoir installé :
 ```bash
 # Cloner le projet
 git clone <votre-repo-url>
-cd UQAR
+cd UQAR_GIT
 
-# Rendre le script exécutable
-chmod +x start.sh
+# Exécuter le script de configuration
+chmod +x setup-uqar.sh
+./setup-uqar.sh
 ```
+
+Le script de configuration va automatiquement :
+- Vérifier les prérequis (Apptainer, pilotes NVIDIA)
+- Créer les dossiers nécessaires
+- Construire les images Apptainer (.sif) depuis les fichiers de définition (.def)
+- Télécharger les données NLTK requises
+- Préparer l'environnement pour le démarrage
 
 ### 2. Lancer l'application
 
 ```bash
 # Démarrer tous les services
-./start.sh
+./run-uqar.sh
 ```
 
 Le script va automatiquement :
-
-- Vérifier que Docker Desktop est lancé
-- Créer les dossiers nécessaires
-- Configurer les variables d'environnement
-- Construire et démarrer tous les services Docker
-- Télécharger le modèle LLaMA 3.1 8B (4.7GB - peut prendre 5-10 minutes)
+- Démarrer Ollama (et télécharger les modèles nécessaires lors du premier démarrage)
+- Démarrer PostgreSQL
+- Démarrer ChromaDB
+- Démarrer le backend FastAPI
+- Démarrer le frontend Next.js
 
 ### 3. Accéder à l'application
 
@@ -48,6 +55,8 @@ Une fois tous les services démarrés :
 - **Frontend** : http://localhost:3000
 - **API Backend** : http://localhost:8000
 - **Documentation API** : http://localhost:8000/docs
+- **ChromaDB** : http://localhost:8001
+- **Ollama** : http://localhost:11434
 
 ## 👥 Premiers pas
 
