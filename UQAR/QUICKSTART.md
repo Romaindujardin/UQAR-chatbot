@@ -73,7 +73,7 @@ Comme il n'y a pas encore d'admin pour valider, vous devez activer manuellement 
 
 ```bash
 # Se connecter à la base de données
-docker exec -it uqar_postgres psql -U uqar_user -d uqar_db
+docker exec -it uqar_postgres psql -U dujr0001 -d uqar_db
 
 # Activer le premier utilisateur (remplacez 1 par l'ID correct)
 UPDATE users SET status = 'active' WHERE id = 1;

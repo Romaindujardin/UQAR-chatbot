@@ -7,8 +7,6 @@ import time
 from .core.config import settings
 from .core.database import Base, engine
 
-# Create tables
-Base.metadata.create_all(bind=engine)
 
 # Import API routers
 try:
@@ -19,6 +17,9 @@ except ImportError as e:
     # Import only essential routers
     from .api import auth, users, sections
     all_routers_available = False
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 # Create FastAPI app
 app = FastAPI(

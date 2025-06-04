@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
 
 from ..core.database import get_db
+from ..schemas.chat_schemas import ChatSessionResponse, ChatMessageResponse, CreateSessionRequest, SendMessageRequest
 from ..models.user import User
 from ..models.chat import ChatSession, ChatMessage
 from ..services.chat_service import ChatService
@@ -13,46 +13,7 @@ from .auth import get_current_active_user
 router = APIRouter()
 
 
-# Schémas Pydantic
-class ChatSessionResponse(BaseModel):
-    id: int
-    title: str
-    section_id: int
-    section_name: str
-    created_at: str
-    last_message_at: Optional[str] = None
-    message_count: int
 
-    class Config:
-        from_attributes = True
-
-
-class ChatMessageResponse(BaseModel):
-    id: int
-    content: str
-    is_user: bool
-    created_at: str
-
-    class Config:
-        from_attributes = True
-
-    @classmethod
-    def from_orm(cls, message):
-        """Convertir un objet ChatMessage en ChatMessageResponse"""
-        return cls(
-            id=message.id,
-            content=message.content,
-            is_user=not message.is_assistant,  # Convertir is_assistant en is_user
-            created_at=message.created_at.isoformat()
-        )
-
-
-class CreateSessionRequest(BaseModel):
-    section_id: int
-
-
-class SendMessageRequest(BaseModel):
-    content: str
 
 
 # Routes

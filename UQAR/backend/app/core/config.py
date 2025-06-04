@@ -10,10 +10,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Base de données PostgreSQL
-    DATABASE_URL: str = os.environ.get("DATABASE_URL", "postgresql://uqar_user:uqar_password@10.0.30.51:38705/uqar_db")
-    
+    DATABASE_URL: str = os.environ.get("DATABASE_URL", "postgresql://dujr0001:URJvSIG0fm@localhost:5432/uqar_db")    
     # ChromaDB
-    CHROMA_HOST: str = os.environ.get("CHROMA_HOST", "10.0.30.51")
+    CHROMA_HOST: str = os.environ.get("CHROMA_HOST", "localhost")
     CHROMA_PORT: int = int(os.environ.get("CHROMA_PORT", 8001))
     CHROMA_PERSIST_DIRECTORY: str = "./chroma_data"
     

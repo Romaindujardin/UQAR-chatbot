@@ -75,8 +75,8 @@ apptainer instance start \
     --bind "${HOME}/apptainer_data/postgres_data:/var/lib/postgresql/data" \
     --bind "${HOME}/apptainer_data/postgres_conf:/etc/postgresql" \
     --bind "${HOME}/apptainer_data/postgres_run:/var/run/postgresql" \
-    --env "POSTGRES_USER=uqar_user" \
-    --env "POSTGRES_PASSWORD=uqar_password" \
+    --env "POSTGRES_USER=dujr0001" \
+    --env "POSTGRES_PASSWORD=URJvSIG0fm" \
     --env "POSTGRES_DB=uqar_db" \
     --env "POSTGRES_HOST_AUTH_METHOD=trust" \
     --env "PGPORT=38705" \
@@ -112,7 +112,7 @@ apptainer instance start \
     --env "PYTHONDONTWRITEBYTECODE=1" \
     --env "PYTHONUNBUFFERED=1" \
     --env "PYTHONPATH=/app" \
-    --env "DATABASE_URL=postgresql://uqar_user:uqar_password@$HOST_IP:38705/uqar_db" \
+    --env "DATABASE_URL=postgresql://dujr0001:URJvSIG0fm@$HOST_IP:38705/uqar_db" \
     --env "CHROMA_HOST=$HOST_IP" \
     --env "CHROMA_PORT=8001" \
     --env "OLLAMA_HOST=$HOST_IP" \
