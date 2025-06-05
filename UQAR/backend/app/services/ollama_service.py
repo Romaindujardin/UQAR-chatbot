@@ -35,6 +35,9 @@ class OllamaService:
             if not is_healthy:
                 logger.error("Ollama service is not healthy.")
                 return "Désolé, le service de génération de texte n'est pas accessible. Veuillez vérifier la configuration."
+            
+            logger.info(f"Ollama full_prompt to be sent: {full_prompt}")
+
 
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -57,7 +60,7 @@ class OllamaService:
                     logger.error(f"Modèle {self.model} non trouvé.")
                     return "Désolé, le modèle demandé n'est pas disponible actuellement."
                 elif response.status_code == 500:
-                    logger.error(f"Erreur serveur Ollama: {response.text}")
+                    logger.error(f"Ollama returned 500 Internal Server Error for the preceding logged prompt. Ollama response: {response.text}")
                     return "Désolé, le service de génération de texte a rencontré une erreur interne."
                 else:
                     logger.error(f"Erreur Ollama: {response.status_code} - {response.text}")

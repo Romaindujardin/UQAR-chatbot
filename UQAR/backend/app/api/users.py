@@ -18,7 +18,7 @@ class UserResponse(BaseModel):
     full_name: str
     role: str
     status: str
-    created_at: str
+    created_at: Optional[str] = None
     last_login: Optional[str] = None
 
     class Config:

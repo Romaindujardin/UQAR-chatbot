@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional, List
 import os
+import logging
 
 
 class Settings(BaseSettings):
@@ -50,7 +51,7 @@ class Settings(BaseSettings):
     LOG_FILE: str = "./logs/app.log"
     
     # CORS
-    ALLOWED_ORIGINS: str = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost,http://10.0.30.51:3000,*")
+    ALLOWED_ORIGINS: str = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
     
     class Config:
         env_file = ".env"
@@ -62,7 +63,9 @@ class Settings(BaseSettings):
     
     def get_allowed_origins(self) -> List[str]:
         """Retourne la liste des origines autorisées"""
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        origins = [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        logging.info(f"CORS Allowed Origins being used: {origins}")
+        return origins
 
 
 # Instance globale des paramètres

@@ -226,6 +226,15 @@ class ChatService:
             else:
                 logger.info("ChromaDB client not available or section_id missing; proceeding without RAG context.")
 
+            if retrieved_context_texts:
+                logger.info(f"Retrieved RAG context. Number of snippets: {len(retrieved_context_texts)}")
+                for i, text in enumerate(retrieved_context_texts):
+                    logger.info(f"RAG context snippet {i+1} (first 100 chars): {text[:100]}")
+                    logger.info(f"RAG context snippet {i+1} (length): {len(text)}")
+            else:
+                logger.info("No RAG context was retrieved or used.")
+
+
             # 4. Obtenir la réponse de OllamaService
             # Le system_prompt par défaut est dans OllamaService._build_prompt
             ai_response_content = await self.ollama_service.generate_response(
