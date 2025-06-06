@@ -9,7 +9,7 @@ import os
 logger = logging.getLogger(__name__)
 
 # Utiliser SQLite au lieu de PostgreSQL
-SQLITE_DATABASE_URL = "sqlite:////home/dujr0001/apptainer_data/uqar.db"
+SQLITE_DATABASE_URL = "sqlite:////home/dujr0001/UQAR_GIT/apptainer_data/uqar.db"
 logger.info(f"Connexion à la base de données SQLite: {SQLITE_DATABASE_URL}")
 
 # Moteur SQLAlchemy pour SQLite

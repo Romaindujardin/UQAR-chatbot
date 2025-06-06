@@ -6,6 +6,7 @@ From: python:3.11-slim
     export PYTHONUNBUFFERED=1
     export PYTHONPATH=/app
     export PORT=8000
+    export NLTK_DATA=/app/nltk_data_project
 
 %post
     # Install system dependencies
@@ -33,8 +34,9 @@ From: python:3.11-slim
     pip install --no-cache-dir -r /app/requirements.txt
 
     # Download SpaCy and NLTK models
+    mkdir -p /app/nltk_data_project
     python -m spacy download fr_core_news_sm
-    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+    python -c "import nltk; nltk.data.path.append('/app/nltk_data_project'); nltk.download('punkt', download_dir='/app/nltk_data_project'); nltk.download('stopwords', download_dir='/app/nltk_data_project')"
 
 %files
     # Copy the entire backend directory
