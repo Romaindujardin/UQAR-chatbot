@@ -170,7 +170,7 @@ Les instances Apptainer utilisent le réseau de l'hôte par défaut, donc les se
 
 ### Stockage persistant
 
-Les données persistantes sont stockées dans `$HOME/apptainer_data/` avec des sous-dossiers pour chaque service :
+Les données persistantes sont stockées dans `UQAR_GIT/apptainer_data/` avec des sous-dossiers pour chaque service :
 - `postgres_data` : Données PostgreSQL
 - `chromadb_data` : Données ChromaDB 
 - `ollama_data` : Modèles et données Ollama
@@ -262,7 +262,7 @@ Si vous rencontrez des erreurs de permission :
 
 ```bash
 # Assurez-vous que votre utilisateur a accès aux dossiers de données
-chmod -R 755 $HOME/apptainer_data
+chmod -R 755 UQAR_GIT/apptainer_data
 ```
 
 ### Ports déjà utilisés

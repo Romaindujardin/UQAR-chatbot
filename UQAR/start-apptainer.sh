@@ -4,6 +4,8 @@
 # Remplace Docker/Docker Compose par Apptainer
 
 set -e
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 
 echo "🚀 Démarrage de l'Assistant Éducatif UQAR (Apptainer)"
 echo "===================================================="
@@ -22,11 +24,11 @@ mkdir -p "${APPTAINER_CACHEDIR}" "${APPTAINER_TMPDIR}"
 
 # Créer les dossiers nécessaires pour les données persistantes
 echo "📁 Création des dossiers nécessaires..."
-mkdir -p "${HOME}/apptainer_data/postgres_data"
-mkdir -p "${HOME}/apptainer_data/chromadb_data"
-mkdir -p "${HOME}/apptainer_data/ollama_data"
-mkdir -p "${HOME}/apptainer_data/uploads"
-mkdir -p "${HOME}/apptainer_data/logs"
+mkdir -p "${PROJET_ROOT}/apptainer_data/postgres_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/chromadb_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/ollama_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/uploads"
+mkdir -p "${PROJET_ROOT}/apptainer_data/logs"
 
 # Créer les dossiers dans le projet
 mkdir -p backend/logs
@@ -79,13 +81,13 @@ echo "🚀 Démarrage des services..."
 # Démarrer PostgreSQL
 echo "🔄 Démarrage de PostgreSQL..."
 apptainer instance start \
-    --bind "${HOME}/apptainer_data/postgres_data:/var/lib/postgresql/data" \
+    --bind "${PROJET_ROOT}/apptainer_data/postgres_data:/var/lib/postgresql/data" \
     postgres.sif postgres_instance
 
 # Démarrer ChromaDB
 echo "🔄 Démarrage de ChromaDB..."
 apptainer instance start \
-    --bind "${HOME}/apptainer_data/chromadb_data:/chroma/chroma" \
+    --bind "${PROJET_ROOT}/apptainer_data/chromadb_data:/chroma/chroma" \
     chromadb.sif chromadb_instance
 
 # Démarrer Ollama avec méthode directe (plus fiable)
@@ -104,11 +106,11 @@ fi
 
 # Démarrer Ollama directement en arrière-plan
 OLLAMA_HOST=0.0.0.0 OLLAMA_PORT=11434 nohup apptainer run --nv \
-    --bind "${HOME}/apptainer_data/ollama_data:/root/.ollama" \
-    docker://ollama/ollama:latest > "${HOME}/apptainer_data/logs/ollama.log" 2>&1 &
+    --bind "${PROJET_ROOT}/apptainer_data/ollama_data:/root/.ollama" \
+    docker://ollama/ollama:latest > "${PROJET_ROOT}/apptainer_data/logs/ollama.log" 2>&1 &
 
 # Sauvegarder le PID pour arrêt ultérieur
-echo $! > "${HOME}/apptainer_data/ollama_data/ollama.pid"
+echo $! > "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 echo "⏳ Ollama démarré avec PID: $!"
 
 # Attendre que les services de base soient prêts
@@ -126,15 +128,15 @@ if curl -s --connect-timeout 5 http://localhost:11434/api/version >/dev/null; th
         echo "⚠️ Modèle llama3.1:70b non trouvé"
     fi
 else
-    echo "⚠️ Ollama n'est pas prêt, vérifiez les logs: ${HOME}/apptainer_data/logs/ollama.log"
+    echo "⚠️ Ollama n'est pas prêt, vérifiez les logs: ${PROJET_ROOT}/apptainer_data/logs/ollama.log"
 fi
 
 # Démarrer le Backend
 echo "🔄 Démarrage du Backend..."
 apptainer instance start \
     --bind "./backend:/app" \
-    --bind "${HOME}/apptainer_data/uploads:/app/uploads" \
-    --bind "${HOME}/apptainer_data/logs:/app/logs" \
+    --bind "${PROJET_ROOT}/apptainer_data/uploads:/app/uploads" \
+    --bind "${PROJET_ROOT}/apptainer_data/logs:/app/logs" \
     --env "DATABASE_URL=postgresql://uqar_user:uqar_password@localhost:5432/uqar_db" \
     --env "CHROMA_HOST=localhost" \
     --env "CHROMA_PORT=8001" \
@@ -167,7 +169,7 @@ echo "📋 Commandes utiles :"
 echo "   Voir les instances:      apptainer instance list"
 echo "   Vérifier le GPU:         nvidia-smi"
 echo "   Voir les logs (backend): apptainer instance logs backend_instance"
-echo "   Voir logs Ollama:        cat ${HOME}/apptainer_data/logs/ollama.log"
+echo "   Voir logs Ollama:        cat ${PROJET_ROOT}/apptainer_data/logs/ollama.log"
 echo "   Arrêter un service:      apptainer instance stop <nom_instance>"
 echo "   Arrêter tout:            ./stop-all.sh"
 echo "   Shell dans un service:   apptainer shell instance://<nom_instance>"

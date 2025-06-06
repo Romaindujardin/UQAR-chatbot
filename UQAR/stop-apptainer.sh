@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Script d'arrêt pour l'Assistant Éducatif UQAR avec Apptainer
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🛑 Arrêt des services Apptainer pour UQAR"
 echo "========================================"
@@ -17,11 +18,11 @@ apptainer instance list
 
 # Arrêter Ollama avec la méthode directe
 echo "🔄 Arrêt d'Ollama (méthode directe)..."
-if [ -f "${HOME}/apptainer_data/ollama_data/ollama.pid" ]; then
-    OLLAMA_PID=$(cat "${HOME}/apptainer_data/ollama_data/ollama.pid")
+if [ -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid" ]; then
+    OLLAMA_PID=$(cat "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid")
     echo "   Arrêt du processus Ollama (PID: $OLLAMA_PID)"
     kill $OLLAMA_PID 2>/dev/null || true
-    rm -f "${HOME}/apptainer_data/ollama_data/ollama.pid"
+    rm -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 fi
 
 # Arrêter les instances une par une pour un arrêt plus propre

@@ -4,6 +4,7 @@
 # Ce script arrête les services Docker, sauvegarde les données et configure Apptainer
 
 set -e
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🚀 Migration de Docker vers Apptainer pour UQAR"
 echo "=============================================="
@@ -75,11 +76,11 @@ fi
 
 # Créer les répertoires pour Apptainer
 echo "📁 Création des répertoires Apptainer..."
-mkdir -p "${HOME}/apptainer_data/postgres_data"
-mkdir -p "${HOME}/apptainer_data/chromadb_data" 
-mkdir -p "${HOME}/apptainer_data/ollama_data"
-mkdir -p "${HOME}/apptainer_data/uploads"
-mkdir -p "${HOME}/apptainer_data/logs"
+mkdir -p "${PROJET_ROOT}/apptainer_data/postgres_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/chromadb_data" 
+mkdir -p "${PROJET_ROOT}/apptainer_data/ollama_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/uploads"
+mkdir -p "${PROJET_ROOT}/apptainer_data/logs"
 
 # Restaurer les données Docker si disponibles
 echo "🔄 Restauration des données Docker vers Apptainer..."
@@ -87,30 +88,30 @@ echo "🔄 Restauration des données Docker vers Apptainer..."
 # PostgreSQL
 if [ -f docker_data_backup/postgres/postgres_data.tar ]; then
     echo "  - Restauration des données PostgreSQL..."
-    tar -xf docker_data_backup/postgres/postgres_data.tar -C "${HOME}/apptainer_data/postgres_data"
+    tar -xf docker_data_backup/postgres/postgres_data.tar -C "${PROJET_ROOT}/apptainer_data/postgres_data"
 fi
 
 # ChromaDB
 if [ -f docker_data_backup/chromadb/chromadb_data.tar ]; then
     echo "  - Restauration des données ChromaDB..."
-    tar -xf docker_data_backup/chromadb/chromadb_data.tar -C "${HOME}/apptainer_data/chromadb_data"
+    tar -xf docker_data_backup/chromadb/chromadb_data.tar -C "${PROJET_ROOT}/apptainer_data/chromadb_data"
 fi
 
 # Ollama
 if [ -f docker_data_backup/ollama/ollama_data.tar ]; then
     echo "  - Restauration des données Ollama..."
-    tar -xf docker_data_backup/ollama/ollama_data.tar -C "${HOME}/apptainer_data/ollama_data"
+    tar -xf docker_data_backup/ollama/ollama_data.tar -C "${PROJET_ROOT}/apptainer_data/ollama_data"
 fi
 
 # Uploads
 if [ -f docker_data_backup/uploads/uploaded_files.tar ]; then
     echo "  - Restauration des fichiers uploadés..."
-    tar -xf docker_data_backup/uploads/uploaded_files.tar -C "${HOME}/apptainer_data/uploads"
+    tar -xf docker_data_backup/uploads/uploaded_files.tar -C "${PROJET_ROOT}/apptainer_data/uploads"
 fi
 
 # Ajuster les permissions
 echo "🔄 Ajustement des permissions..."
-chmod -R 755 "${HOME}/apptainer_data"
+chmod -R 755 "${PROJET_ROOT}/apptainer_data"
 
 echo ""
 echo "✅ Migration terminée !"

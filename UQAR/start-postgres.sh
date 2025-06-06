@@ -3,6 +3,7 @@
 # Script pour démarrer uniquement PostgreSQL
 
 set -e
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🚀 Démarrage de PostgreSQL pour l'Assistant Éducatif UQAR"
 echo "=========================================================="
@@ -14,13 +15,13 @@ mkdir -p "${APPTAINER_CACHEDIR}" "${APPTAINER_TMPDIR}"
 
 # Créer les dossiers nécessaires pour PostgreSQL
 echo "📁 Création des dossiers PostgreSQL..."
-mkdir -p "${HOME}/apptainer_data/postgres_data"
-mkdir -p "${HOME}/apptainer_data/postgres_conf"
-mkdir -p "${HOME}/apptainer_data/postgres_run"
+mkdir -p "${PROJET_ROOT}/apptainer_data/postgres_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/postgres_conf"
+mkdir -p "${PROJET_ROOT}/apptainer_data/postgres_run"
 
 # Configurer PostgreSQL pour écouter sur toutes les interfaces et le port 5432
 echo "🔧 Configuration de PostgreSQL..."
-cat > "${HOME}/apptainer_data/postgres_conf/postgresql.conf" << EOL
+cat > "${PROJET_ROOT}/apptainer_data/postgres_conf/postgresql.conf" << EOL
 listen_addresses = '*'
 port = 5432
 EOL
@@ -36,8 +37,8 @@ fi
 echo "🔄 Démarrage de PostgreSQL..."
 apptainer instance stop postgres_instance >/dev/null 2>&1 || true
 apptainer instance start \
-    --bind "${HOME}/apptainer_data/postgres_data:/var/lib/postgresql/data" \
-    --bind "${HOME}/apptainer_data/postgres_conf:/etc/postgresql" \
+    --bind "${PROJET_ROOT}/apptainer_data/postgres_data:/var/lib/postgresql/data" \
+    --bind "${PROJET_ROOT}/apptainer_data/postgres_conf:/etc/postgresql" \
     --env "POSTGRES_USER=uqar_user" \
     --env "POSTGRES_PASSWORD=uqar_password" \
     --env "POSTGRES_DB=uqar_db" \

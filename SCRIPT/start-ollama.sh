@@ -1,4 +1,5 @@
 #!/bin/bash
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Commande directe pour démarrer Ollama avec llama3.1:70b
 # Utilise l'adresse 0.0.0.0 sur le port 11434
@@ -14,15 +15,15 @@ if ss -tuln | grep -q ":11434 "; then
 fi
 
 # Create necessary directories
-mkdir -p "${HOME}/apptainer_data/ollama_data"
-mkdir -p "${HOME}/apptainer_data/logs"
+kdir -p "${PROJET_ROOT}/apptainer_data/ollama_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/logs"
 
 # Start Ollama in background with specific parameters
 OLLAMA_HOST=0.0.0.0 OLLAMA_PORT=11434 nohup apptainer run --nv \
-    --bind "${HOME}/apptainer_data/ollama_data:/root/.ollama" \
-    docker://ollama/ollama:latest > ~/apptainer_data/logs/ollama.log 2>&1 &
+    --bind "${PROJET_ROOT}/apptainer_data/ollama_data:/root/.ollama" \
+    docker://ollama/ollama:latest > ${PROJET_ROOT}/apptainer_data/logs/ollama.log 2>&1 &
 
 # Save PID
-echo $! > "${HOME}/apptainer_data/ollama_data/ollama.pid"
+echo $! > "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 echo "Ollama started with PID: $!"
-echo "Check logs at: ~/apptainer_data/logs/ollama.log" 
+echo "Check logs at: ${PROJET_ROOT}/apptainer_data/logs/ollama.log" 

@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # Script pour tester l'état d'Ollama
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🔍 Vérification d'Ollama..."
 
 # Vérifier si le processus Ollama est en cours d'exécution
-if [ -f "${HOME}/apptainer_data/ollama_data/ollama.pid" ]; then
-    OLLAMA_PID=$(cat "${HOME}/apptainer_data/ollama_data/ollama.pid")
+if [ -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid" ]; then
+    OLLAMA_PID=$(cat "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid")
     if ps -p $OLLAMA_PID > /dev/null; then
         echo "✅ Processus Ollama en cours d'exécution (PID: $OLLAMA_PID)"
     else
@@ -41,9 +42,9 @@ if curl -s --connect-timeout 5 http://localhost:11434/api/version > /dev/null; t
     echo -e "Réponse: \"${RESPONSE:0:100}...\""
     
     # Vérifier la configuration du backend
-    if [ -f "${HOME}/UQAR/backend/app/core/config.py" ]; then
-        BACKEND_PORT=$(grep "OLLAMA_PORT" "${HOME}/UQAR/backend/app/core/config.py" | grep -o "11[0-9]*")
-        BACKEND_MODEL=$(grep "OLLAMA_MODEL" "${HOME}/UQAR/backend/app/core/config.py" | grep -o '"[^"]*"' | tr -d '"')
+    if [ -f "${PROJET_ROOT}/UQAR/backend/app/core/config.py" ]; then
+        BACKEND_PORT=$(grep "OLLAMA_PORT" "${PROJET_ROOT}/UQAR/backend/app/core/config.py" | grep -o "11[0-9]*")
+        BACKEND_MODEL=$(grep "OLLAMA_MODEL" "${PROJET_ROOT}/UQAR/backend/app/core/config.py" | grep -o '"[^"]*"' | tr -d '"')
         echo "ℹ️ Configuration backend: Port=$BACKEND_PORT, Modèle=$BACKEND_MODEL"
         
         if [ "$BACKEND_PORT" != "11434" ]; then
@@ -52,10 +53,10 @@ if curl -s --connect-timeout 5 http://localhost:11434/api/version > /dev/null; t
     fi
 else
     echo "❌ API Ollama ne répond pas"
-    echo "📝 Vérifiez les logs: ${HOME}/apptainer_data/logs/ollama.log"
+    echo "📝 Vérifiez les logs: ${PROJET_ROOT}/apptainer_data/logs/ollama.log"
 fi
 
 echo -e "\n💡 Commandes utiles:"
 echo "   Démarrer Ollama:  ./start-ollama-direct.sh"
 echo "   Arrêter Ollama:   ./stop-ollama-direct.sh"
-echo "   Logs Ollama:      cat ${HOME}/apptainer_data/logs/ollama.log" 
+echo "   Logs Ollama:      cat ${PROJET_ROOT}/apptainer_data/logs/ollama.log" 

@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # Script pour arrêter tous les services
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🛑 Arrêt complet de tous les services..."
 
 # Arrêter Ollama avec la méthode directe
 echo "🛑 Arrêt d'Ollama..."
-if [ -f "${HOME}/apptainer_data/ollama_data/ollama.pid" ]; then
-    OLLAMA_PID=$(cat "${HOME}/apptainer_data/ollama_data/ollama.pid")
+if [ -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid" ]; then
+    OLLAMA_PID=$(cat "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid")
     echo "🔄 Arrêt du processus Ollama (PID: $OLLAMA_PID)"
     kill $OLLAMA_PID 2>/dev/null || true
-    rm -f "${HOME}/apptainer_data/ollama_data/ollama.pid"
+    rm -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 fi
 
 # Arrêter toutes les instances Apptainer

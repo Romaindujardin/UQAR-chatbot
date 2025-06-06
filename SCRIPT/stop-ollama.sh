@@ -1,12 +1,13 @@
 #!/bin/bash
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Simple script to stop Ollama
 
 # Kill by PID if available
-if [ -f "${HOME}/apptainer_data/ollama_data/ollama.pid" ]; then
-    PID=$(cat "${HOME}/apptainer_data/ollama_data/ollama.pid")
+if [ -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid" ]; then
+    PID=$(cat "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid")
     kill $PID 2>/dev/null || true
-    rm -f "${HOME}/apptainer_data/ollama_data/ollama.pid"
+    rm -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 fi
 
 # Kill all Ollama processes

@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # Script pour arrêter Ollama démarré avec la méthode directe
+PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🛑 Arrêt d'Ollama..."
 
 # Arrêter via PID sauvegardé
-if [ -f "${HOME}/apptainer_data/ollama_data/ollama.pid" ]; then
-    OLLAMA_PID=$(cat "${HOME}/apptainer_data/ollama_data/ollama.pid")
+if [ -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid" ]; then
+    OLLAMA_PID=$(cat "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid")
     echo "🔄 Arrêt du processus Ollama (PID: $OLLAMA_PID)"
     kill $OLLAMA_PID 2>/dev/null || true
-    rm -f "${HOME}/apptainer_data/ollama_data/ollama.pid"
+    rm -f "${PROJET_ROOT}/apptainer_data/ollama_data/ollama.pid"
 fi
 
 # Arrêter toutes les instances Ollama (pour compatibilité)
