@@ -316,17 +316,35 @@ export default function TeacherDocuments() {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <button
-                  onClick={() => router.push("/teacher/dashboard")}
-                  className="btn-outline"
-                >
-                  Dashboard
-                </button>
                 <button onClick={logout} className="btn-outline">
                   Déconnexion
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+            <nav className="flex space-x-8">
+              <button
+                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300"
+                onClick={() => router.push("/teacher/dashboard")}
+              >
+                Dashboard
+              </button>
+              <button
+                className="px-3 py-2 text-sm font-medium text-primary-600 border-b-2 border-primary-600"
+                onClick={() => router.push("/teacher/documents")}
+              >
+                Documents
+              </button>
+              <button
+                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300"
+                onClick={() => router.push("/teacher/exercises")}
+              >
+                Exercices
+              </button>
+            </nav>
           </div>
         </header>
 

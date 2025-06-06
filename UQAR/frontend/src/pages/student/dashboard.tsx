@@ -110,21 +110,13 @@ export default function StudentDashboard() {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <button
-                  onClick={() => router.push("/student/chat")}
-                  className="btn-primary"
-                >
-                  Assistant IA
-                </button>
                 <button onClick={logout} className="btn-outline">
                   Déconnexion
                 </button>
               </div>
             </div>
           </div>
-        </header>
-
-        {/* Navigation */}
+          {/* Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200">
           <nav className="flex space-x-8">
             <button
@@ -147,6 +139,9 @@ export default function StudentDashboard() {
             </button>
           </nav>
         </div>
+        </header>
+
+        
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -304,7 +299,7 @@ export default function StudentDashboard() {
                               className="btn-primary flex-1"
                               onClick={() => router.push("/student/chat")}
                             >
-                              💬 Chat RAG
+                              💬 Assistant IA
                             </button>
                             <button className="btn-outline">
                               📝 Exercices

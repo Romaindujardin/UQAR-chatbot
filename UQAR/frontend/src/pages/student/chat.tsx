@@ -289,24 +289,44 @@ export default function StudentChat() {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <button
-                  onClick={() => router.push("/student/dashboard")}
-                  className="btn-outline"
-                >
-                  Dashboard
-                </button>
                 <button onClick={logout} className="btn-outline">
                   Déconnexion
                 </button>
               </div>
             </div>
           </div>
+          {/* Navigation */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+          <nav className="flex space-x-8">
+            <button
+              className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300"
+              onClick={() => router.push("/student/dashboard")}
+            >
+              Dashboard
+            </button>
+            <button
+              className="px-3 py-2 text-sm font-medium text-primary-600 border-b-2 border-primary-600"
+              onClick={() => router.push("/student/chat")}
+            >
+              Assistant IA
+            </button>
+            <button
+              className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300"
+              onClick={() => router.push("/student/exercises")}
+            >
+              Exercices
+            </button>
+          </nav>
+        </div>
         </header>
 
+
+
         {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden py-1 sm:px-2">
           {/* Sidebar */}
-          <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+          <div className="w-64 bg-white border-r border-gray-200 flex flex-col rounded-lg shadow-sm overflow-hidden">
+
             {/* Nouvelle conversation */}
             <div className="p-4 border-b border-gray-200">
               <div className="mb-4">

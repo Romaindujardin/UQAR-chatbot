@@ -169,12 +169,6 @@ export default function TeacherDashboard() {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <button
-                  onClick={() => router.push("/teacher/documents")}
-                  className="btn-primary"
-                >
-                  Gérer les documents
-                </button>
                 <button onClick={logout} className="btn-outline">
                   Déconnexion
                 </button>
@@ -391,7 +385,7 @@ export default function TeacherDashboard() {
 
                         <div className="flex space-x-2">
                           <button className="btn-primary flex-1">Gérer</button>
-                          <button className="btn-outline">Documents</button>
+                          <button className="btn-outline" onClick={() => router.push("/teacher/documents")}>Documents</button>
                         </div>
                       </div>
                     </div>
