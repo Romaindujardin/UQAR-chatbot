@@ -5,11 +5,19 @@ Ce dépôt contient le code source et les scripts de déploiement pour l'Assista
 ## Liste des tâches
 
 ### Backend (Python/FastAPI)
-- [ ] Implémenter le module cœur IA (RAG)
+- [ ] Implémenter la génération d'exercices propre à la section et au document attaché
 
 ### Frontend (Next.js)
-- [ ] Améliorer le style de chaque page
-- [ ] Implémenter le chatbot rag
+- [ ] page enseignante avec les options (critères exercices (nombre, type, difficulté))
+- [ ] page enseignante pour la validation des exercices générés
+- [ ] page étudiante pour visualiser les exercices
+- [ ] amélioration du dashboard étudiant pour englober plus de data
+- [ ] amélioration du dashboard super-admin pour englober plus de data
+- [ ] fonction supprimer une section
+- [ ] améliorer le RAG, se tourner vers du KAG
+- [X] filtre anti hors sujet, via HyDE
+- [ ] Améliorer l'aspect éducatif
+- [ ] Se pencher sur le LLM
 
 ## Structure du dossier
 
