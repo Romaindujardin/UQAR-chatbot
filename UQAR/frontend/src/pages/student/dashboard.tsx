@@ -13,11 +13,24 @@ interface Section {
   created_at: string;
 }
 
+interface Document {
+  id: number;
+  original_filename: string;
+  file_size: number;
+  document_type: string;
+  status: string;
+  is_vectorized: boolean;
+  uploaded_at: string;
+  page_count?: number;
+  vector_count?: number;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sectionDocuments, setSectionDocuments] = useState<Record<number, Document[] | 'loading' | 'error'>>({});
 
   useEffect(() => {
     // Vérifier l'authentification
@@ -63,6 +76,14 @@ export default function StudentDashboard() {
       const data = await response.json();
       console.log("Réponse des sections:", data);
       setSections(data);
+      // Load documents for each section
+      if (data && Array.isArray(data)) {
+        data.forEach((section: Section) => {
+          if (section.is_active) {
+            loadDocumentsForSection(section.id);
+          }
+        });
+      }
     } catch (error) {
       console.error("Erreur lors du chargement des sections:", error);
       toast.error("Erreur lors du chargement des sections");
@@ -71,11 +92,86 @@ export default function StudentDashboard() {
     }
   };
 
+  const loadDocumentsForSection = async (sectionId: number) => {
+    setSectionDocuments(prev => ({ ...prev, [sectionId]: 'loading' }));
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`/api/documents/section/${sectionId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSectionDocuments(prev => ({ ...prev, [sectionId]: data as Document[] }));
+    } catch (error) {
+      console.error(`Erreur lors du chargement des documents pour la section ${sectionId}:`, error);
+      setSectionDocuments(prev => ({ ...prev, [sectionId]: 'error' }));
+      toast.error(`Erreur lors du chargement des documents pour la section ${sectionId}`);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
     router.push("/login");
+  };
+
+  const handleDownload = async (documentId: number, filename: string) => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      toast.error("Authentification requise pour télécharger le fichier.");
+      return;
+    }
+
+    toast.loading(`Téléchargement de ${filename} en cours...`, { id: 'download-toast' });
+
+    try {
+      const response = await fetch(`/api/documents/download/${documentId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let errorDetail = "Erreur lors du téléchargement du fichier.";
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.detail) {
+            errorDetail = errorData.detail;
+          }
+        } catch (e) {
+          // Failed to parse JSON, use default error or response status text
+          errorDetail = response.statusText || errorDetail;
+        }
+        toast.error(errorDetail, { id: 'download-toast' });
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Téléchargement de ${filename} terminé.`, { id: 'download-toast' });
+
+    } catch (error) {
+      console.error("Erreur de téléchargement:", error);
+      toast.error("Une erreur réseau est survenue lors du téléchargement.", { id: 'download-toast' });
+    }
   };
 
   if (isLoading) {
@@ -304,6 +400,42 @@ export default function StudentDashboard() {
                             <button className="btn-outline">
                               📝 Exercices
                             </button>
+                          </div>
+
+                          {/* Display Documents */}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <h5 className="text-sm font-medium text-gray-700 mb-2">
+                              Documents:
+                            </h5>
+                            {sectionDocuments[section.id] === 'loading' && (
+                              <p className="text-sm text-gray-500">Chargement des documents...</p>
+                            )}
+                            {sectionDocuments[section.id] === 'error' && (
+                              <p className="text-sm text-red-500">Erreur lors du chargement des documents.</p>
+                            )}
+                            {Array.isArray(sectionDocuments[section.id]) && (
+                              (sectionDocuments[section.id] as Document[]).length > 0 ? (
+                                <ul className="space-y-2">
+                                  {(sectionDocuments[section.id] as Document[]).map(doc => (
+                                    <li key={doc.id} className="flex justify-between items-center py-1 px-2 rounded hover:bg-gray-100">
+                                      <span className="text-sm text-gray-700">{doc.original_filename}</span>
+                                      <button
+                                        onClick={() => handleDownload(doc.id, doc.original_filename)}
+                                        className="btn-secondary btn-sm py-1 px-2" // Adjusted padding for smaller button
+                                        title={`Télécharger ${doc.original_filename}`}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                        Télécharger
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-gray-500">Aucun document dans cette section.</p>
+                              )
+                            )}
                           </div>
                         </div>
                       </div>

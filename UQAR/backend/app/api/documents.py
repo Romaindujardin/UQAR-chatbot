@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from starlette.responses import FileResponse
 from pydantic import BaseModel
 
 from ..core.database import get_db
@@ -149,3 +150,46 @@ async def delete_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de la suppression du document: {str(e)}"
         ) 
+
+@router.get("/download/{document_id}")
+async def download_document(
+    document_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Télécharger un document"""
+    document_service = DocumentService(db)
+
+    try:
+        file_path, original_filename = document_service.get_document_filepath(document_id)
+
+        if not file_path or not original_filename:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document non trouvé ou nom de fichier manquant"
+            )
+        
+        # Assurez-vous que le fichier existe avant de tenter de le servir
+        # Note: os.path.exists pourrait être utilisé ici si file_path est un chemin absolu
+        # Pour cet exemple, nous supposons que get_document_filepath gère la validité du chemin
+
+        return FileResponse(
+            path=file_path,
+            filename=original_filename,
+            media_type='application/octet-stream'  # Ou un type MIME plus spécifique si connu
+        )
+    except FileNotFoundError: # Potentiellement levé par FileResponse si le chemin n'est pas valide
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier non trouvé sur le serveur"
+        )
+    except ValueError as e: # Au cas où get_document_filepath lèverait une ValueError pour un ID non trouvé
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors du téléchargement du document: {str(e)}"
+        )

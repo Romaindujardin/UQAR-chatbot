@@ -171,6 +171,16 @@ class DocumentService:
         """
         return self.db.query(Document).filter(Document.section_id == section_id).all()
     
+    def get_document_filepath(self, document_id: int) -> Optional[tuple[str, str]]:
+        """
+        Récupère le chemin du fichier et le nom original d'un document par son ID.
+        Retourne (file_path, original_filename) ou None si non trouvé.
+        """
+        document = self.db.query(Document).filter(Document.id == document_id).first()
+        if document:
+            return document.file_path, document.original_filename
+        return None
+    
     def delete_document(self, document_id: int, user_id: int) -> bool:
         """
         Supprime un document et ses vecteurs
