@@ -163,7 +163,9 @@ export default function TeacherExercisesPage() {
     toast(`Validation de l'exercice ${exerciseId}...`);
     try {
         // PUT /api/exercises/exercises/{exercise_id}/validate
-        const response = await api.put(`/api/exercises/exercises/${exerciseId}/validate`);
+        const response = await api.put(`/api/exercises/exercises/${exerciseId}/validate`, {
+          validation_notes: "Exercice validé par l'enseignant"
+        });
         toast.success(`Exercice ${exerciseId} validé avec succès!`);
         // Update local state
         setExercises(prevExercises => 

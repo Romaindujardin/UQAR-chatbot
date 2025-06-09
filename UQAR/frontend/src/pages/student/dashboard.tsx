@@ -397,7 +397,10 @@ export default function StudentDashboard() {
                             >
                               💬 Assistant IA
                             </button>
-                            <button className="btn-outline">
+                            <button 
+                              className="btn-outline"
+                              onClick={() => router.push("/student/exercises")}
+                            >
                               📝 Exercices
                             </button>
                           </div>
