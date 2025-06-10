@@ -1,7 +1,7 @@
 import logging
 import json
 from typing import List, Dict, Optional, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..models import Exercise, Question, Section, Document
 from ..models.exercise import ExerciseStatus
@@ -133,8 +133,19 @@ class ExerciseGenerationService:
             db.commit()
             db.refresh(exercise)
             
-            logger.info(f"Exercise {exercise.id} generated successfully with {len(questions)} questions")
-            return exercise
+            # Ensure questions are loaded for the response model
+            loaded_exercise = db.query(Exercise).options(
+                joinedload(Exercise.questions)
+            ).filter(Exercise.id == exercise.id).first()
+            
+            if not loaded_exercise:
+                # This should ideally not happen if the exercise was just committed and refreshed
+                logger.error(f"Failed to reload exercise {exercise.id} with its questions.")
+                # Fallback to returning the original exercise object, though it might cause issues downstream
+                return exercise 
+
+            logger.info(f"Exercise {loaded_exercise.id} reloaded with {len(loaded_exercise.questions)} questions for response serialization.")
+            return loaded_exercise
             
         except Exception as e:
             logger.error(f"Error generating exercises: {e}", exc_info=True)

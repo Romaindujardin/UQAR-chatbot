@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
@@ -68,9 +69,26 @@ async def generate_exercises(
             use_specific_documents=request.use_specific_documents
         )
         
-        # Load questions for response
-        db.refresh(exercise)
-        return ExerciseResponse.from_orm(exercise)
+        try:
+            # The 'exercise' object returned by the service should now have 'questions' eagerly loaded.
+            # The db.refresh(exercise) call here is likely redundant and potentially problematic if 'exercise' 
+            # is from a different session than 'db' in this router. Let's remove it.
+            response_data = ExerciseResponse.from_orm(exercise)
+            return response_data
+        except Exception as pydantic_exc:
+            # Log the specific error during Pydantic conversion
+            # It's important to get the logger instance first.
+            # import logging # This is already imported at the top of the file
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Error during Pydantic conversion (ExerciseResponse.from_orm) for exercise ID {exercise.id if exercise else 'Unknown'}: {pydantic_exc}",
+                exc_info=True
+            )
+            # Re-raise as an HTTPException to be handled by FastAPI's error handling
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur lors de la préparation de la réponse de l'exercice: {str(pydantic_exc)}"
+            )
         
     except ValueError as e:
         raise HTTPException(
