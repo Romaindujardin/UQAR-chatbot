@@ -15,7 +15,7 @@ if ss -tuln | grep -q ":11434 "; then
 fi
 
 # Create necessary directories
-kdir -p "${PROJET_ROOT}/apptainer_data/ollama_data"
+mkdir -p "${PROJET_ROOT}/apptainer_data/ollama_data"
 mkdir -p "${PROJET_ROOT}/apptainer_data/logs"
 
 # Start Ollama in background with specific parameters
