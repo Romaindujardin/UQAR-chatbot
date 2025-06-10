@@ -137,6 +137,32 @@ export default function TeacherDashboard() {
     router.push("/login");
   };
 
+  const handleDeleteSection = async (sectionId: number) => {
+    if (
+      !confirm(
+        "Êtes-vous sûr de vouloir supprimer cette section et tous ses documents et exercices associés ? Cette action est irréversible."
+      )
+    ) {
+      return;
+    }
+
+    toast.loading("Suppression de la section en cours...");
+    try {
+      await api.delete(`/api/sections/${sectionId}`);
+      toast.dismiss();
+      toast.success("Section supprimée avec succès");
+      loadSections(); // Reload sections to reflect the deletion
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Erreur lors de la suppression de la section:", error);
+      if (error.response && error.response.data && error.response.data.detail) {
+        toast.error(`Erreur: ${error.response.data.detail}`);
+      } else {
+        toast.error("Échec de la suppression de la section.");
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -350,11 +376,11 @@ export default function TeacherDashboard() {
                   {sections.map((section) => (
                     <div
                       key={section.id}
-                      className="card hover:shadow-md transition-shadow"
+                      className="card hover:shadow-md transition-shadow flex flex-col" // Added flex flex-col
                     >
-                      <div className="card-body">
+                      <div className="card-body flex flex-col flex-grow"> {/* Added flex flex-col flex-grow */}
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">
+                          <h4 className="text-lg font-medium text-gray-900 truncate" title={section.name}>
                             {section.name}
                           </h4>
                           <span
@@ -369,10 +395,11 @@ export default function TeacherDashboard() {
                         </div>
 
                         {section.description && (
-                          <p className="text-sm text-gray-600 mb-4">
+                          <p className="text-sm text-gray-600 mb-4 flex-grow"> {/* Added flex-grow */}
                             {section.description}
                           </p>
                         )}
+                        {!section.description && <div className="flex-grow"></div>} {/* Spacer if no description */}
 
                         <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                           <span>{section.document_count} documents</span>
@@ -383,9 +410,29 @@ export default function TeacherDashboard() {
                           </span>
                         </div>
 
-                        <div className="flex space-x-2">
-                          <button className="btn-primary flex-1">Gérer</button>
-                          <button className="btn-outline" onClick={() => router.push("/teacher/documents")}>Documents</button>
+                        <div className="flex space-x-2 mt-auto"> {/* Buttons at the bottom */}
+                          <button 
+                            onClick={() => router.push(`/teacher/section/${section.id}`)} 
+                            className="btn-primary py-2 px-3 text-sm flex-1 whitespace-nowrap"
+                          >
+                            Gérer
+                          </button>
+                          <button 
+                            onClick={() => router.push(`/teacher/documents?section_id=${section.id}`)} 
+                            className="btn-outline py-2 px-3 text-sm flex-1 whitespace-nowrap"
+                          >
+                            Documents
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSection(section.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 text-sm rounded-md shadow-sm flex items-center justify-center"
+                            title="Supprimer la section"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            {/* Text "Supprimer" removed to make it an icon button */}
+                          </button>
                         </div>
                       </div>
                     </div>

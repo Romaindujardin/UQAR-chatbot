@@ -106,6 +106,30 @@ export default function TeacherExercisesPage() {
     }
   };
 
+  const handleDeleteExercise = async (exerciseId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet exercice ? Cette action est irréversible.")) {
+      return;
+    }
+
+    toast.loading("Suppression de l'exercice en cours...");
+    try {
+      await api.delete(`/api/exercises/exercises/${exerciseId}`);
+      toast.dismiss();
+      toast.success("Exercice supprimé avec succès");
+      if (selectedSectionId) {
+        fetchExercisesForSection(selectedSectionId);
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Erreur lors de la suppression de l'exercice:", error);
+      if (error.response && error.response.data && error.response.data.detail) {
+        toast.error(`Erreur: ${error.response.data.detail}`);
+      } else {
+        toast.error("Échec de la suppression de l'exercice.");
+      }
+    }
+  };
+
   // Placeholder: Fetch exercises for the selected section
   useEffect(() => {
     if (selectedSectionId !== null) {
@@ -360,14 +384,25 @@ export default function TeacherExercisesPage() {
                                     <span>Mis à jour le: {new Date(exercise.updated_at).toLocaleDateString()} {new Date(exercise.updated_at).toLocaleTimeString()}</span>
                                 </div>
                             </div>
-                            {exercise.status === 'pending' && (
-                                <button 
-                                    onClick={() => handleValidateExercise(exercise.id)}
-                                    className="btn-secondary btn-sm"
+                            <div className="flex items-center space-x-2">
+                                {exercise.status === 'pending' && (
+                                    <button 
+                                        onClick={() => handleValidateExercise(exercise.id)}
+                                        className="btn-secondary btn-sm whitespace-nowrap"
+                                    >
+                                        Valider cet Exercice
+                                    </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteExercise(exercise.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-2 rounded text-sm flex items-center"
+                                  title="Supprimer cet exercice"
                                 >
-                                    Valider cet Exercice
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
                                 </button>
-                            )}
+                            </div>
                           </div>
                           {/* Display Questions */}
                           <div className="mt-4 space-y-3">
