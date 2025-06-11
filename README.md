@@ -139,9 +139,8 @@ La plateforme définit trois rôles distincts pour une gestion structurée :
 -   **Enseignant** : Gère ses sections de cours, téléverse les documents, génère et valide les exercices, et peut suivre l'activité de ses étudiants.
 -   **Super-Admin** : Valide les inscriptions des nouveaux utilisateurs (enseignants et étudiants), gère les comptes et a une vue d'ensemble de l'activité de la plateforme.
 
-### Optimisation Locale et Apple Silicon
+### Optimisation Locale
 -   La plateforme est conçue pour fonctionner localement, assurant la confidentialité des données.
--   Une attention particulière a été portée à l'optimisation pour les puces Apple Silicon (M1/M2/M3), permettant d'exécuter des modèles de langage performants sans nécessiter de matériel spécialisé coûteux.
 
 ## Liste des tâches (Status du Projet)
 
@@ -167,19 +166,19 @@ Ce projet est en cours de développement. Voici un aperçu des fonctionnalités 
 - [X] Structure des composants organisée
 - [X] Page de connexion et système de routing
 - [X] Gestion d'état avec React Query (ou similaire)
-- [ ] Page enseignante avec les options (critères exercices: nombre, type, difficulté)
-- [ ] Page enseignante pour la validation des exercices générés
-- [ ] Page étudiante pour visualiser les exercices et obtenir du feedback
+- [X] Page enseignante avec les options (critères exercices: nombre, type, difficulté)
+- [X] Page enseignante pour la validation des exercices générés
+- [X] Page étudiante pour visualiser les exercices et obtenir du feedback
 - [ ] Amélioration du dashboard étudiant pour englober plus de data (progrès, scores)
 - [ ] Amélioration du dashboard super-admin pour englober plus de data (statistiques d'utilisation)
-- [ ] Fonction supprimer une section (et documents/exercices associés)
+- [X] Fonction supprimer une section (et documents/exercices associés)
 
 ### Infrastructure et Déploiement
 - [X] **Docker Compose** pour développement local (optimisé macOS Apple Silicon)
 - [X] **Apptainer/Singularity** pour déploiement sur serveurs UQAR
 - [X] Scripts de démarrage et de configuration (`setup-uqar.sh`, `run-uqar.sh`, etc.)
 - [X] Base de données PostgreSQL et ChromaDB conteneurisées
-- [X] Ollama configuré pour LLaMA 3.1 8B (natif Apple Silicon)
+- [X] Ollama configuré pour LLaMA 3.1 70B
 
 ### Documentation
 - [X] README principal (ce fichier)
@@ -206,14 +205,4 @@ Ce projet est en cours de développement. Voici un aperçu des fonctionnalités 
 -   `stop-uqar.sh`: Script pour arrêter tous les services Apptainer.
 -   `start-no-ollama.sh`: Script pour démarrer les services sans Ollama (pour des tests ou environnements limités).
 
-## Développement
 
-Pour contribuer au projet, consultez le fichier `UQAR/DEVELOPMENT.md`. Il contient des informations détaillées sur la structure du code, la configuration de l'environnement de développement local (principalement avec Docker, y compris pour macOS), les conventions de codage, et les processus de test.
-
-## Licence
-
-Ce projet est sous licence MIT. (À confirmer/modifier selon les directives de l'UQAR pour un projet éducatif interne).
-
----
-
-*Ce README a été consolidé à partir de plusieurs documents pour fournir une vue d'ensemble complète du projet Assistant Éducatif UQAR.*
