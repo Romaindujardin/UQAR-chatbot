@@ -4,7 +4,7 @@
 
 L'Assistant Éducatif UQAR est une plateforme d'apprentissage locale conçue pour aider les étudiants de l'UQAR à réviser leurs cours. Le projet vise à fournir un environnement interactif où les étudiants peuvent interagir avec un chatbot RAG (Retrieval-Augmented Generation) basé sur leurs documents de cours, générer des exercices automatiquement et recevoir des explications pédagogiques.
 
-L'objectif principal est de créer un outil d'accompagnement autonome pour les étudiants, encourageant la réflexion critique et la prévention du plagiat passif. La plateforme est spécialement optimisée pour une utilisation locale, y compris sur les puces Apple Silicon (M1/M2/M3), garantissant la confidentialité des données et un accès rapide sans dépendance à des services cloud.
+L'objectif principal est de créer un outil d'accompagnement autonome pour les étudiants, encourageant la réflexion critique et la prévention du plagiat passif. La plateforme est spécialement optimisée pour une utilisation locale, sur les serveurs de l'école, garantissant la confidentialité des données et un accès rapide sans dépendance à des services cloud.
 
 Le public cible comprend :
 - **Les étudiants** : Pour réviser, poser des questions sur leurs cours et s'entraîner avec des exercices.
@@ -19,7 +19,7 @@ L'Assistant Éducatif UQAR est construit avec les technologies et outils suivant
 - **Frontend** : Next.js (basé sur React) pour une interface utilisateur moderne, réactive et conviviale.
 - **Base de données relationnelle** : PostgreSQL pour stocker les informations structurées (utilisateurs, cours, exercices, etc.).
 - **Base de données vectorielle** : ChromaDB pour stocker les embeddings des documents de cours et permettre une recherche sémantique rapide et pertinente pour le RAG.
-- **Modèle de langage (LLM)** : Ollama avec des modèles comme LLaMA 3.1 8B, optimisé pour une exécution locale, y compris sur Apple Silicon. Cela permet une IA conversationnelle et de génération d'exercices performante sans nécessiter de GPU externe puissant ou de connexion internet constante.
+- **Modèle de langage (LLM)** : Ollama avec des modèles comme LLaMA 3.1 70B, optimisé pour une exécution locale. Cela permet une IA conversationnelle et de génération d'exercices performante sans nécessiter de GPU externe puissant ou de connexion internet constante.
 - **Embeddings** : `sentence-transformers/all-MiniLM-L6-v2` (optimisé pour les puces M1) ou des modèles BAAI/bge pour générer les représentations vectorielles des textes.
 - **Authentification** : JWT (JSON Web Tokens) avec Argon2 pour le hachage sécurisé des mots de passe.
 - **Conteneurisation** : Apptainer (anciennement Singularity) pour le déploiement sur les serveurs HPC de l'UQAR, et Docker pour le développement local et sur d'autres plateformes.
