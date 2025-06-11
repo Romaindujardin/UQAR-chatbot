@@ -313,7 +313,3 @@ Pour optimiser l'utilisation du GPU :
 1. Utilisez des modèles adaptés à la taille de votre GPU (mémoire)
 2. Vérifiez l'utilisation avec `nvidia-smi`
 3. Ajustez les paramètres du modèle Ollama si nécessaire
-
----
-
-Pour toute question supplémentaire, consultez la [documentation officielle d'Apptainer](https://apptainer.org/docs/user/main/). 
