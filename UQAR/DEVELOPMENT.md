@@ -156,10 +156,9 @@ components/
 - **Métadonnées** : Informations sur les documents sources
 - **Recherche sémantique** : Récupération de contexte pertinent
 
-### IA (vLLM + LLaMA)
+### IA (LLaMA)
 
-- **vLLM** : Serveur d'inférence optimisé
-- **LLaMA 3.1 8B** : Modèle de base (évolutif vers 70B)
+- **LLaMA 3.1 70B** : Modèle de base (évolutif vers la version Instruct)
 - **Prompts structurés** : Templates pour différents types de tâches
 - **Streaming** : Réponses en temps réel
 
@@ -224,7 +223,7 @@ export const Button: React.FC<ButtonProps> = ({
 ### Intégrer une nouvelle fonctionnalité IA
 
 1. **Définir le prompt** dans `backend/app/services/`
-2. **Implémenter l'appel vLLM**
+2. **Implémenter l'appel ollama**
 3. **Ajouter la validation** des réponses
 4. **Créer l'interface frontend**
 
@@ -275,7 +274,6 @@ docker-compose logs -f vllm
 - **FastAPI** : Métriques Prometheus sur `/metrics`
 - **PostgreSQL** : Monitoring des requêtes lentes
 - **ChromaDB** : Temps de recherche vectorielle
-- **vLLM** : Utilisation GPU et temps d'inférence
 
 ### Debugging
 
@@ -309,39 +307,6 @@ docker-compose -f docker-compose.staging.yml up -d
 4. **Mettre en place la sauvegarde** des données
 5. **Configurer le monitoring** avancé
 
-## 🤝 Contribution
-
-### Workflow Git
-
-1. **Fork** le projet
-2. **Créer une branche** : `git checkout -b feature/nouvelle-fonctionnalite`
-3. **Commiter** : `git commit -m "feat: ajouter nouvelle fonctionnalité"`
-4. **Pousser** : `git push origin feature/nouvelle-fonctionnalite`
-5. **Créer une Pull Request**
-
-### Standards de code
-
-#### Backend (Python)
-
-- **PEP 8** pour le style
-- **Type hints** obligatoires
-- **Docstrings** pour les fonctions publiques
-- **Black** pour le formatage automatique
-
-#### Frontend (TypeScript)
-
-- **ESLint** pour la qualité du code
-- **Prettier** pour le formatage
-- **Types stricts** TypeScript
-- **Composants fonctionnels** avec hooks
-
-### Conventions de nommage
-
-- **Branches** : `feature/`, `bugfix/`, `hotfix/`
-- **Commits** : Convention Conventional Commits
-- **Variables** : camelCase (JS/TS), snake_case (Python)
-- **Fichiers** : kebab-case pour les composants
-
 ## 📚 Ressources utiles
 
 ### Documentation
@@ -350,7 +315,6 @@ docker-compose -f docker-compose.staging.yml up -d
 - [Next.js](https://nextjs.org/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [ChromaDB](https://docs.trychroma.com/)
-- [vLLM](https://vllm.readthedocs.io/)
 
 ### Outils de développement
 
@@ -358,7 +322,3 @@ docker-compose -f docker-compose.staging.yml up -d
 - **pgAdmin** : Administration PostgreSQL
 - **React DevTools** : Debug React
 - **Docker Desktop** : Gestion des conteneurs
-
----
-
-**Questions ?** Créez une issue ou contactez l'équipe de développement.
