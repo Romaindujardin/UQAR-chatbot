@@ -4,6 +4,8 @@
 
 Ce document explique comment migrer l'Assistant Éducatif UQAR de Docker vers Apptainer (anciennement Singularity). Apptainer est un système de conteneurs optimisé pour les environnements HPC et scientifiques, offrant une meilleure sécurité et isolation.
 
+Pour un aperçu général du projet et d'autres sujets, veuillez consulter le [README.md principal](../README.md).
+
 ## 🔧 Prérequis
 
 - Apptainer (version 1.0.0 ou supérieure)
