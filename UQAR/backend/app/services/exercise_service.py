@@ -1,5 +1,7 @@
 import logging
 import json
+import re
+import asyncio
 from typing import List, Dict, Optional, Any
 from sqlalchemy.orm import Session, joinedload
 
@@ -295,33 +297,66 @@ class ExerciseGenerationService:
             difficulty=difficulty
         )
         
-        try:
-            # Generate with Ollama
-            logger.info("Calling Ollama to generate questions...")
-            response = await self.ollama_service.generate_response(
-                prompt=user_prompt,
-                system_prompt=system_prompt
-            )
-            
-            logger.info(f"Ollama response received (length: {len(response)})")
-            logger.debug(f"Ollama response: {response[:500]}...")
-            
-            # Parse the response
-            questions = self._parse_generated_questions(response, exercise_type)
-            
-            logger.info(f"Parsed {len(questions)} questions from Ollama response")
-            
-            # Ensure we have the requested number of questions
-            if len(questions) < num_questions:
-                logger.warning(f"Generated only {len(questions)} questions instead of {num_questions}")
+        questions: List[Dict] = []
+        max_retries = 3
+        retry_delay_seconds = 2
+
+        for attempt in range(max_retries):
+            try:
+                # Generate with Ollama
+                logger.info(f"Attempt {attempt + 1}/{max_retries}: Calling Ollama to generate questions...")
+                response = await self.ollama_service.generate_response(
+                    prompt=user_prompt,
+                    system_prompt=system_prompt
+                )
                 
-            return questions[:num_questions]
-            
-        except Exception as e:
-            logger.error(f"Error generating questions with Ollama: {e}", exc_info=True)
-            # Return fallback questions
+                logger.info(f"Ollama response received (length: {len(response)})")
+                logger.debug(f"Ollama response: {response[:500]}...")
+
+                # Parse the response
+                questions = self._parse_generated_questions(response, exercise_type)
+                logger.info(f"Parsed {len(questions)} questions from Ollama response on attempt {attempt + 1}")
+
+                # Check if enough questions were generated
+                if len(questions) >= num_questions:
+                    logger.info(f"Successfully generated {len(questions)} questions.")
+                    break  # Exit loop if successful
+                else:
+                    logger.warning(f"Generated {len(questions)}/{num_questions} questions on attempt {attempt + 1}.")
+                    if attempt < max_retries - 1:
+                        logger.warning(f"Retrying in {retry_delay_seconds}s...")
+                        await asyncio.sleep(retry_delay_seconds)
+                    else:
+                        # This is the final attempt and still not enough questions
+                        logger.error(
+                            f"Final attempt {attempt + 1}/{max_retries} failed to generate and parse enough questions. "
+                            f"Got {len(questions)} out of {num_questions}."
+                        )
+                        logger.debug(f"Raw Ollama response on final attempt: {response}")
+
+            except Exception as e:
+                logger.error(f"Error generating questions with Ollama on attempt {attempt + 1}: {e}", exc_info=True)
+                if attempt < max_retries - 1:
+                    logger.warning(f"Retrying in {retry_delay_seconds}s...")
+                    await asyncio.sleep(retry_delay_seconds)
+                else:
+                    logger.error(f"Failed to generate questions after {max_retries} attempts due to error.")
+                    # Also log the response if available and an error occurred on the last attempt
+                    if 'response' in locals() and response:
+                         logger.debug(f"Raw Ollama response on final failed attempt (exception): {response}")
+
+        # Ensure we have the requested number of questions, otherwise use fallback
+        if len(questions) < num_questions:
+            logger.warning(
+                f"Generated only {len(questions)} questions instead of {num_questions} after all retries. "
+                f"Using fallback questions."
+            )
+            logger.critical(f"CRITICAL: Using fallback questions for section {section_name} as all Ollama generation attempts failed.")
+            # Fallback questions are returned, no need to log 'response' here again as it was logged above if it was the last attempt.
             return self._get_fallback_questions(num_questions, exercise_type)
             
+        return questions[:num_questions]
+
     def _build_system_prompt(self, exercise_type: QuestionType, difficulty: DifficultyLevel, section_name: str) -> str:
         """Construire le prompt système pour la génération"""
         
@@ -411,12 +446,11 @@ Génère les {num_questions} questions maintenant:"""
             # Clean the response
             response = response.strip()
             
-            # Try to extract JSON from the response
-            json_start = response.find('[')
-            json_end = response.rfind(']') + 1
+            # Try to extract JSON from the response using regex
+            match = re.search(r'\[\s*\{.*\}\s*\]', response, re.DOTALL)
             
-            if json_start >= 0 and json_end > json_start:
-                json_str = response[json_start:json_end]
+            if match:
+                json_str = match.group(0)
                 questions = json.loads(json_str)
                 
                 # Validate and clean questions
@@ -447,28 +481,38 @@ Génère les {num_questions} questions maintenant:"""
         """Générer des questions de secours en cas d'échec"""
         
         fallback_questions = []
+        base_explanation = "Explication: La génération automatique de cette question a échoué. L'enseignant doit la compléter ou la remplacer."
         
         for i in range(num_questions):
+            question_text_prefix = f"ATTENTION: Génération automatique échouée. Question {i+1}: "
+
             if exercise_type == QuestionType.MCQ:
                 question = {
-                    "text": f"Question {i+1}: Veuillez reformuler cette question basée sur le contenu du cours.",
+                    "text": question_text_prefix + "Veuillez reformuler cette question basée sur le contenu du cours.",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option A",
-                    "explanation": "Cette question doit être reformulée par l'enseignant.",
+                    "explanation": base_explanation,
                     "points": 1
                 }
             elif exercise_type == QuestionType.OPEN_ENDED:
                 question = {
-                    "text": f"Question {i+1}: Analysez et expliquez un concept important du cours.",
+                    "text": question_text_prefix + "Analysez et expliquez un concept important du cours.",
                     "expected_keywords": ["concept", "analyse", "explication"],
-                    "explanation": "Cette question doit être adaptée par l'enseignant.",
+                    "explanation": base_explanation,
                     "points": 2
                 }
-            else:
+            elif exercise_type == QuestionType.TRUE_FALSE: # Added specific handling for TRUE_FALSE
                 question = {
-                    "text": f"Question {i+1}: [À compléter par l'enseignant]",
-                    "correct_answer": "true",
-                    "explanation": "Cette question doit être complétée par l'enseignant.",
+                    "text": question_text_prefix + "Affirmez ou niez la déclaration suivante basée sur le contenu du cours.",
+                    "correct_answer": "true", # Default to true, teacher should verify
+                    "explanation": base_explanation,
+                    "points": 1
+                }
+            else:  # Handles FILL_BLANK and any other types
+                question = {
+                    "text": question_text_prefix + "[À compléter par l'enseignant]",
+                    "correct_answer": "Réponse à définir", # More generic than "true"
+                    "explanation": base_explanation,
                     "points": 1
                 }
                 

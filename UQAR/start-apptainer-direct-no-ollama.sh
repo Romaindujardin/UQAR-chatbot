@@ -16,7 +16,7 @@ if ! command -v apptainer &> /dev/null; then
 fi
 
 # Définir les chemins du projet
-PROJET_ROOT="${HOME}/UQAR_GIT"
+PROJET_ROOT="${HOME}/UQAR-chatbot"
 UQAR_DIR="${PROJET_ROOT}/UQAR"
 BACKEND_DIR="${UQAR_DIR}/backend"
 FRONTEND_DIR="${UQAR_DIR}/frontend"
@@ -128,7 +128,7 @@ apptainer instance start \
 
 # Installer les dépendances et démarrer l'application backend
 echo "🔄 Installation des dépendances backend..."
-apptainer exec instance://backend_instance bash -c "cd /app && pip install -r /app/requirements.txt && python -m spacy download fr_core_news_sm"
+apptainer exec instance://backend_instance bash -c "cd /app && pip install --no-cache-dir -r /home/beus0003/UQAR-chatbot/UQAR/backend/requirements.txt"
 apptainer exec instance://backend_instance bash -c "mkdir -p /app/nltk_data_project && python -c \"import nltk; nltk.data.path.append('/app/nltk_data_project'); nltk.download('punkt', download_dir='/app/nltk_data_project'); nltk.download('stopwords', download_dir='/app/nltk_data_project')\""
 
 # Démarrer l'application backend en arrière-plan
