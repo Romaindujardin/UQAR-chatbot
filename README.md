@@ -103,7 +103,7 @@ Pour le développement local (y compris sur macOS ou Windows), l'utilisation de 
 -   **Ports déjà utilisés** :
     Utilisez `lsof -i :<port>` pour trouver le processus utilisant le port et arrêtez-le si nécessaire. Les ports par défaut sont 3000 (frontend), 8000 (backend), 8001 (ChromaDB), 11434 (Ollama), 5432 (PostgreSQL, mais mappé à 38705 par défaut dans les scripts Apptainer).
 
-Pour des informations plus détaillées sur Apptainer (installation, configuration avancée, GPU, troubleshooting), consultez le [Guide Apptainer](UQAR/APPTAINER.md).
+Pour **toutes les questions relatives à Apptainer** (installation, configuration avancée, GPU, dépannage approfondi), le [Guide Apptainer](UQAR/APPTAINER.md) est la ressource principale à consulter.
 
 ## Fonctionnalités et Exercices
 
