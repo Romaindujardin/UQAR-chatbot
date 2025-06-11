@@ -29,7 +29,7 @@ L'architecture est conçue pour être modulaire, permettant des mises à jour et
 ## Guide de démarrage rapide
 
 Ce guide s'adresse principalement à une utilisation sur un système Linux avec Apptainer, qui est l'environnement cible pour le déploiement sur les serveurs de l'UQAR. 
-Pour le développement local, notamment sur macOS ou Windows, l'utilisation de Docker est recommandée, tel que décrit dans le [Guide de Développement](UQAR/DEVELOPMENT.md). Certains scripts spécifiques à Docker (comme `start.sh` pour macOS) peuvent se trouver dans le dossier `UQAR/`.
+Pour le développement local (y compris sur macOS ou Windows), l'utilisation de Docker est une alternative recommandée ; le fichier [Guide de Développement](UQAR/DEVELOPMENT.md) contient des instructions complètes pour mettre en place un environnement de développement local ou basé sur Docker. Certains scripts spécifiques à Docker (comme `start.sh` pour macOS) peuvent se trouver dans le dossier `UQAR/`.
 
 ### Prérequis (Apptainer sur Linux)
 
