@@ -1,5 +1,7 @@
 # 🛠️ Guide de Développement - Assistant Éducatif UQAR
 
+Pour un aperçu général du projet et les instructions de déploiement avec Apptainer, veuillez consulter le [README.md principal](../README.md).
+
 ## 📁 Structure du Projet
 
 ```
