@@ -96,7 +96,7 @@ Pour le développement local, notamment sur macOS ou Windows, l'utilisation de D
     Vous pouvez tenter un téléchargement manuel en accédant au shell de l'instance :
     ```bash
     apptainer shell instance://ollama_instance
-    ollama pull llama3.1:8b 
+    ollama pull llama3.1:70b 
     exit
     ```
     Puis redémarrez les services avec `./stop-uqar.sh` et `./run-uqar.sh`.
