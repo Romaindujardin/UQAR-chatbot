@@ -192,8 +192,8 @@ Ce projet est en cours de développement. Voici un aperçu des fonctionnalités 
     -   `backend/`: Application FastAPI (Python).
     -   `frontend/`: Application Next.js (TypeScript).
     -   `*.def`: Fichiers de définition Apptainer pour chaque service.
-    -   `DEVELOPMENT.md`: Guide pour les développeurs.
-    -   `APPTAINER.md`: Informations spécifiques à l'utilisation d'Apptainer.
+    -   `DEVELOPMENT.md`: Guide complet pour la configuration de l'environnement de développement (local ou avec Docker) et les contributions au projet.
+    -   `APPTAINER.md`: Guide détaillé pour l'installation, la configuration, l'utilisation et le dépannage d'Apptainer pour ce projet.
     -   Autres scripts et configurations spécifiques à l'environnement UQAR ou macOS (ex: `start.sh` pour Docker sur macOS).
 -   `apptainer_data/`: Données persistantes pour les conteneurs Apptainer (logs, bases de données PostgreSQL et ChromaDB, modèles Ollama, fichiers téléversés).
 -   `apptainer_sandbox/`: Optionnel, pour construire les conteneurs Apptainer en mode sandbox.
