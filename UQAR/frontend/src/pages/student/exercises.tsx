@@ -57,6 +57,7 @@ export default function StudentExercisesPage() {
   const [result, setResult] = useState<ExerciseResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingSubmission, setIsFetchingSubmission] = useState(false);
   
   const logout = () => {
     localStorage.removeItem("access_token");
@@ -416,10 +417,53 @@ export default function StudentExercisesPage() {
                         {exercises.map((exercise, index) => (
                           <li key={exercise.id}>
                             <button
-                              onClick={() => {
+                              onClick={async () => {
+                                if (selectedExercise?.id === exercise.id) return; // Avoid refetch if already selected
+
                                 setSelectedExercise(exercise);
-                                setResult(null);
-                                setAnswers({});
+                                setResult(null); // Clear previous result
+                                setAnswers({});   // Clear previous answers
+                                setIsFetchingSubmission(true);
+
+                                try {
+                                  const response = await api.get(`/api/exercises/exercises/${exercise.id}/submissions`);
+                                  if (response.data && response.data.length > 0) {
+                                    const priorSubmission = response.data[0]; // Already ordered by submitted_at desc
+
+                                    const total_points = exercise.questions.reduce((sum, q) => sum + q.points, 0);
+                                    
+                                    let overallFeedbackText = `Vous avez obtenu ${priorSubmission.score}/${total_points} points (${priorSubmission.percentage.toFixed(1)}%). `;
+                                    if (priorSubmission.percentage >= 80) {
+                                        overallFeedbackText += "Excellent travail !";
+                                    } else if (priorSubmission.percentage >= 60) {
+                                        overallFeedbackText += "Bon travail !";
+                                    } else {
+                                        overallFeedbackText += "Continuez vos efforts !";
+                                    }
+
+                                    const mappedResult: ExerciseResult = {
+                                      exercise_id: priorSubmission.exercise_id,
+                                      total_points: total_points,
+                                      earned_points: priorSubmission.score,
+                                      percentage: priorSubmission.percentage,
+                                      feedback: priorSubmission.feedback, // This should match AnswerFeedback[]
+                                      overall_feedback: overallFeedbackText,
+                                    };
+                                    setResult(mappedResult);
+                                    setAnswers(priorSubmission.answers || {});
+                                  } else {
+                                    // No prior submission found
+                                    setResult(null);
+                                    setAnswers({});
+                                  }
+                                } catch (error: any) {
+                                  console.error("Failed to fetch prior submission:", error);
+                                  toast.error(error.response?.data?.detail || "Erreur lors du chargement de la soumission précédente.");
+                                  setResult(null);
+                                  setAnswers({});
+                                } finally {
+                                  setIsFetchingSubmission(false);
+                                }
                               }}
                               className={`w-full text-left p-3 rounded-md transition-colors ${
                                 selectedExercise?.id === exercise.id
@@ -445,7 +489,14 @@ export default function StudentExercisesPage() {
 
               {/* Exercise Content */}
               <div className="md:col-span-2">
-                {selectedExercise ? (
+                {isFetchingSubmission ? (
+                    <div className="card">
+                        <div className="card-body text-center">
+                            <div className="spinner w-6 h-6 mx-auto mb-2"></div>
+                            <p className="text-gray-500">Chargement de la soumission...</p>
+                        </div>
+                    </div>
+                ) : selectedExercise ? (
                   <div className="card">
                     <div className="card-header">
                       <h2 className="text-xl font-semibold">
