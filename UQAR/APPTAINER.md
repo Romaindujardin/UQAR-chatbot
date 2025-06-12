@@ -4,6 +4,8 @@
 
 Ce document explique comment migrer l'Assistant Éducatif UQAR de Docker vers Apptainer (anciennement Singularity). Apptainer est un système de conteneurs optimisé pour les environnements HPC et scientifiques, offrant une meilleure sécurité et isolation.
 
+Pour un aperçu général du projet et d'autres sujets, veuillez consulter le [README.md principal](../README.md).
+
 ## 🔧 Prérequis
 
 - Apptainer (version 1.0.0 ou supérieure)
@@ -311,7 +313,3 @@ Pour optimiser l'utilisation du GPU :
 1. Utilisez des modèles adaptés à la taille de votre GPU (mémoire)
 2. Vérifiez l'utilisation avec `nvidia-smi`
 3. Ajustez les paramètres du modèle Ollama si nécessaire
-
----
-
-Pour toute question supplémentaire, consultez la [documentation officielle d'Apptainer](https://apptainer.org/docs/user/main/). 
