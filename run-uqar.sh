@@ -38,7 +38,7 @@ fi
 # Démarrer Ollama directement en arrière-plan
 OLLAMA_HOST=0.0.0.0 OLLAMA_PORT=11434 nohup apptainer run --nv \
     --bind "${OLLAMA_DATA_DIR}:/root/.ollama" \
-    docker://ollama/ollama:latest > "${LOGS_DIR}/ollama.log" 2>&1 &
+    "${SCRIPT_DIR}/UQAR/ollama.sif" > "${LOGS_DIR}/ollama.log" 2>&1 &
 
 # Sauvegarder le PID pour arrêt ultérieur
 echo $! > "${OLLAMA_DATA_DIR}/ollama.pid"

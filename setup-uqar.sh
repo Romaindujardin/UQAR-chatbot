@@ -49,7 +49,7 @@ cd "${SCRIPT_DIR}/UQAR"
 # Construire ChromaDB
 if [ ! -f "${SCRIPT_DIR}/UQAR/chromadb.sif" ]; then
     echo "🔄 Construction de l'image ChromaDB..."
-    apptainer build chromadb.sif chromadb.def
+    sudo apptainer build chromadb.sif chromadb.def
 else
     echo "✅ L'image ChromaDB existe déjà."
 fi
@@ -57,7 +57,7 @@ fi
 # Construire PostgreSQL
 if [ ! -f "${SCRIPT_DIR}/UQAR/postgres.sif" ]; then
     echo "🔄 Construction de l'image PostgreSQL..."
-    apptainer build postgres.sif postgres.def
+    sudo apptainer build postgres.sif postgres.def
 else
     echo "✅ L'image PostgreSQL existe déjà."
 fi
@@ -65,7 +65,7 @@ fi
 # Construire Ollama
 if [ ! -f "${SCRIPT_DIR}/UQAR/ollama.sif" ]; then
     echo "🔄 Construction de l'image Ollama (peut prendre du temps)..."
-    apptainer build ollama.sif ollama.def
+    sudo apptainer build ollama.sif ollama.def
 else
     echo "✅ L'image Ollama existe déjà."
 fi
