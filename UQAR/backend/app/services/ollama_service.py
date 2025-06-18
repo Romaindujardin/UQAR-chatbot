@@ -250,6 +250,29 @@ class OllamaService:
         except Exception as e:
             logger.error(f"Error in check_relevance: {e}", exc_info=True)
             return True
+    
+    async def generate_title(self, question: str) -> str:
+        """Génère un titre court résumant la question"""
+
+        try:
+            system_prompt = (
+                "Tu es un générateur de titres. "
+                "À partir de la question de l'utilisateur, réponds uniquement "
+                "par un court titre de six mots maximum décrivant son sujet. "
+                "N'ajoute pas de ponctuation et ne produis aucune phrase."
+            )
+            raw = await self.generate_response(
+                prompt=question,
+                system_prompt=system_prompt,
+            )
+
+            title_line = raw.strip().split("\n")[0]
+            words = title_line.split()
+            cleaned = " ".join(words[:6]).strip().rstrip(".?!")
+            return cleaned[:60] if cleaned else "Conversation"
+        except Exception as e:
+            logger.error(f"Error generating title: {e}")
+            return "Conversation"
 
     async def health_check(self) -> bool:
         """Vérifier si Ollama est disponible et si le modèle est chargé"""

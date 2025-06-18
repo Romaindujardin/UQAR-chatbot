@@ -192,19 +192,29 @@ class ChatService:
                 logger.warning(f"Session_id {session_id} not found or user_id {user_id} is not authorized for send_message.")
                 raise ValueError("Session non trouvée ou accès non autorisé.")
 
-            # 2. Sauvegarder le message de l'utilisateur
+            # 2. Compter les messages existants pour savoir si c'est le premier
+            existing_count = (
+                self.db.query(ChatMessage)
+                .filter(ChatMessage.session_id == session_id)
+                .count()
+            )
+
+            # 3. Sauvegarder le message de l'utilisateur
+
+            # 3. Sauvegarder le message de l'utilisateur
             # Assumant que ChatMessage a les champs: session_id, content, is_assistant, created_at
             user_message = ChatMessage(
                 session_id=session_id,
                 content=content,
-                is_assistant=False, # Message de l'utilisateur
+                is_assistant=False,  # Message de l'utilisateur
                 created_at=datetime.utcnow()
             )
             self.db.add(user_message)
-            self.db.flush() # Pour obtenir l'ID du message utilisateur si besoin avant commit
+            self.db.flush()  # Pour obtenir l'ID du message utilisateur si besoin avant commit
 
-            # 3. Récupérer le contexte RAG via ChromaDB
+            # 4. Récupérer le contexte RAG via ChromaDB
             retrieved_context_texts = []
+            section = None
             if self.chroma_client and session.section_id:
                 section = self.db.query(Section).filter(Section.id == session.section_id).first()
                 if section and section.chroma_collection_name:
@@ -233,14 +243,32 @@ class ChatService:
                     logger.info(f"RAG context snippet {i+1} (length): {len(text)}")
             else:
                 logger.info("No RAG context was retrieved or used.")
+            
+            # Construire un contexte simple pour la vérification de pertinence
+            if section:
+                relevance_context = f"Nom de la section: {section.name}. Description: {section.description or ''}"
+            else:
+                relevance_context = ""
 
 
-            # 4. Obtenir la réponse de OllamaService
-            # Le system_prompt par défaut est dans OllamaService._build_prompt
-            ai_response_content = await self.ollama_service.generate_response(
-                prompt=content,
-                context=retrieved_context_texts if retrieved_context_texts else None
-            )
+            is_relevant = await self.ollama_service.check_relevance(content, relevance_context)
+
+            if not is_relevant:
+                ai_response_content = "Désolé, cette question ne semble pas liée au sujet de cette section."
+            else:
+                # 4. Obtenir la réponse de OllamaService
+                # Le system_prompt par défaut est dans OllamaService._build_prompt
+                ai_response_content = await self.ollama_service.generate_response(
+                    prompt=content,
+                    context=retrieved_context_texts if retrieved_context_texts else None
+                )
+
+                if existing_count == 0:
+                    try:
+                        new_title = await self.ollama_service.generate_title(content)
+                        session.title = new_title
+                    except Exception:
+                        pass
 
             # 5. Sauvegarder le message de l'assistant
             assistant_message = ChatMessage(
