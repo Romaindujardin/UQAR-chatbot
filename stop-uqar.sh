@@ -15,13 +15,29 @@ echo "========================================="
 echo "🔄 Arrêt d'Ollama..."
 if [ -f "${OLLAMA_DATA_DIR}/ollama.pid" ]; then
     OLLAMA_PID=$(cat "${OLLAMA_DATA_DIR}/ollama.pid")
-    echo "   Arrêt du processus Ollama (PID: $OLLAMA_PID)"
+    echo "   Arrêt du processus Ollama parent (PID: $OLLAMA_PID)"
     kill $OLLAMA_PID 2>/dev/null || true
     rm -f "${OLLAMA_DATA_DIR}/ollama.pid"
 fi
 
+# Arrêter aussi tous nos processus ollama serve
+pkill -f -u $(whoami) "ollama serve" 2>/dev/null || true
+# Attendre un peu pour que les sockets se ferment
+sleep 2
+
 # 2. Arrêter toutes les instances Apptainer
 echo "🔄 Arrêt de toutes les instances Apptainer..."
+
+# D'abord tuer les processus nohup qui tournent dans les instances
+echo "   Arrêt des processus nohup dans les instances..."
+pkill -f -u $(whoami) "uvicorn app.main:app" 2>/dev/null || true
+pkill -f -u $(whoami) "npm run dev" 2>/dev/null || true
+# Arrêter aussi les processus next-server de notre utilisateur
+pkill -f -u $(whoami) "next-server" 2>/dev/null || true
+# Attendre un peu pour que les processus se terminent
+sleep 2
+
+# Ensuite arrêter les instances
 apptainer instance list | awk '{if(NR>1)print $1}' | xargs -I{} apptainer instance stop {} 2>/dev/null || echo "Aucune instance Apptainer en cours d'exécution"
 
 # 3. Tuer tous les processus Ollama restants
@@ -42,12 +58,21 @@ echo "Port ChromaDB (8001):"
 ss -tuln | grep 8001 || echo "Aucun port ChromaDB n'est ouvert"
 
 # 5. Forcer la libération des ports si nécessaire
-for PORT in 11434 11435 5432 38705 8000 3000 8001; do
+echo "🔧 Vérification finale des ports..."
+for PORT in 11434 11435 38705 8000 8001; do
     if ss -tuln | grep -q ":$PORT "; then
-        echo "⚠️ Port $PORT toujours utilisé, tentative de libération forcée..."
-        fuser -k ${PORT}/tcp 2>/dev/null || true
+        echo "⚠️ Port $PORT toujours utilisé par d'autres processus (normal si partagé)"
+        # Ne pas forcer la fermeture des ports qui peuvent être utilisés par d'autres utilisateurs
+        # fuser -k ${PORT}/tcp 2>/dev/null || true
     fi
 done
+
+# Vérifier spécifiquement le port 3000 de notre utilisateur
+OUR_PORT_3000=$(ss -tlnp 2>/dev/null | grep ":3000 " | grep "$(whoami)" || true)
+if [ ! -z "$OUR_PORT_3000" ]; then
+    echo "⚠️ Port 3000 encore utilisé par nos processus, tentative de libération..."
+    fuser -k 3000/tcp 2>/dev/null || true
+fi
 
 echo ""
 echo "✅ Arrêt de tous les services terminé"

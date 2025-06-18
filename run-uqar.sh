@@ -36,13 +36,25 @@ if ss -tuln | grep -q ":11434 "; then
 fi
 
 # Démarrer Ollama directement en arrière-plan
+# Option 1: Processus direct (méthode actuelle)
 OLLAMA_HOST=0.0.0.0 OLLAMA_PORT=11434 nohup apptainer run --nv \
     --bind "${OLLAMA_DATA_DIR}:/root/.ollama" \
     "${SCRIPT_DIR}/UQAR/ollama.sif" > "${LOGS_DIR}/ollama.log" 2>&1 &
 
-# Sauvegarder le PID pour arrêt ultérieur
+# Sauvegarder le PID
 echo $! > "${OLLAMA_DATA_DIR}/ollama.pid"
 echo "⏳ Ollama démarré avec PID: $!"
+
+# Option 2: Instance Apptainer (commentée par défaut)
+# Décommentez ces lignes et commentez l'option 1 si vous voulez qu'Ollama apparaisse dans "apptainer instance list"
+#
+# apptainer instance start \
+#     --nv \
+#     --bind "${OLLAMA_DATA_DIR}:/root/.ollama" \
+#     --env "OLLAMA_HOST=0.0.0.0" \
+#     --env "OLLAMA_PORT=11434" \
+#     "${SCRIPT_DIR}/UQAR/ollama.sif" ollama_instance
+# echo "⏳ Ollama démarré comme instance Apptainer"
 
 # Attendre que Ollama démarre
 echo "⏳ Attente du démarrage d'Ollama..."
