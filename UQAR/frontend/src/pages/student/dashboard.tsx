@@ -25,10 +25,17 @@ interface Document {
   vector_count?: number;
 }
 
+interface StudentStats {
+  total_exercises: number;
+  completed_exercises: number;
+  chat_sessions: number;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [sections, setSections] = useState<Section[]>([]);
+  const [stats, setStats] = useState<StudentStats>({ total_exercises: 0, completed_exercises: 0, chat_sessions: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [sectionDocuments, setSectionDocuments] = useState<Record<number, Document[] | 'loading' | 'error'>>({});
 
@@ -51,7 +58,35 @@ export default function StudentDashboard() {
 
     setUser(parsedUser);
     loadSections();
+    loadStudentStats();
   }, [router]);
+
+  const loadStudentStats = async () => {
+    try {
+      console.log("Chargement des statistiques étudiant...");
+      
+      const token = localStorage.getItem("access_token");
+      
+      const response = await fetch("/api/students/stats", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Statistiques récupérées:", data);
+      setStats(data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques:", error);
+      toast.error("Erreur lors du chargement des statistiques");
+    }
+  };
 
   const loadSections = async () => {
     try {
@@ -290,7 +325,7 @@ export default function StudentDashboard() {
                       <dt className="text-sm font-medium text-gray-500 truncate">
                         Sessions de chat
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">0</dd>
+                      <dd className="text-lg font-medium text-gray-900">{stats.chat_sessions}</dd>
                     </dl>
                   </div>
                 </div>
@@ -316,7 +351,9 @@ export default function StudentDashboard() {
                       <dt className="text-sm font-medium text-gray-500 truncate">
                         Exercices complétés
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">0</dd>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.completed_exercises}/{stats.total_exercises}
+                      </dd>
                     </dl>
                   </div>
                 </div>

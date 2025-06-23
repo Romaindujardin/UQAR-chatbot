@@ -311,6 +311,53 @@ async def delete_exercise(
     return {"message": "Exercice supprimé avec succès"}
 
 
+@router.get("/students/stats")
+async def get_student_stats(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Obtenir les statistiques de l'étudiant connecté"""
+    
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les étudiants peuvent accéder à ces statistiques"
+        )
+    
+    try:
+        # Compter les exercices disponibles (validés)
+        total_exercises = db.query(Exercise).filter(
+            Exercise.status == ExerciseStatus.VALIDATED
+        ).count()
+        
+        # Compter les exercices complétés par l'étudiant
+        # IMPORTANT: Ne compter que les exercices distincts complétés (pas le nombre de tentatives)
+        completed_exercises = db.query(ExerciseSubmission.exercise_id).join(
+            Exercise, ExerciseSubmission.exercise_id == Exercise.id
+        ).filter(
+            ExerciseSubmission.student_id == current_user.id,
+            Exercise.status == ExerciseStatus.VALIDATED
+        ).distinct().count()
+        
+        # Compter les sessions de chat de l'étudiant
+        from ..models.chat import ChatSession
+        chat_sessions = db.query(ChatSession).filter(
+            ChatSession.user_id == current_user.id
+        ).count()
+        
+        return {
+            "total_exercises": total_exercises,
+            "completed_exercises": completed_exercises,
+            "chat_sessions": chat_sessions
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de la récupération des statistiques: {str(e)}"
+        )
+
+
 # Student endpoints
 
 @router.post("/exercises/{exercise_id}/submit", response_model=ExerciseResult)
