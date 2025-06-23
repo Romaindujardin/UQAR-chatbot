@@ -31,6 +31,16 @@ class QuestionCreate(QuestionBase):
     pass
 
 
+class QuestionUpdate(BaseModel):
+    text: Optional[str] = Field(None, description="The question text")
+    question_type: Optional[QuestionType] = None
+    options: Optional[List[str]] = Field(None, description="Options for MCQ questions")
+    correct_answer: Optional[str] = Field(None, description="Correct answer for MCQ/True-False")
+    expected_keywords: Optional[List[str]] = Field(None, description="Keywords for open-ended questions")
+    explanation: Optional[str] = Field(None, description="Explanation of the answer")
+    points: Optional[int] = Field(None, description="Points for this question")
+
+
 class QuestionInDB(QuestionBase):
     id: int
     
@@ -39,15 +49,28 @@ class QuestionInDB(QuestionBase):
 
 
 class ExerciseGenerateRequest(BaseModel):
-    num_questions: int = Field(5, ge=1, le=20, description="Number of questions to generate")
-    difficulty: DifficultyLevel = Field(DifficultyLevel.MEDIUM)
-    exercise_type: QuestionType = Field(QuestionType.MCQ)
+    # Mode simple (valeurs par défaut)
+    num_questions: Optional[int] = Field(5, ge=1, le=20, description="Number of questions to generate")
+    difficulty: Optional[DifficultyLevel] = Field(DifficultyLevel.MEDIUM)
+    exercise_type: Optional[QuestionType] = Field(QuestionType.MCQ)
     use_specific_documents: Optional[List[int]] = Field(None, description="Specific document IDs to use")
+    
+    # Mode avancé
+    custom_prompt: Optional[str] = Field(None, description="Custom prompt for advanced mode")
+    temp_content: Optional[str] = Field(None, description="Temporary content for advanced mode")
     
     @validator('num_questions')
     def validate_num_questions(cls, v):
-        if v < 1 or v > 20:
+        if v is not None and (v < 1 or v > 20):
             raise ValueError('Number of questions must be between 1 and 20')
+        return v
+    
+    @validator('custom_prompt')
+    def validate_advanced_mode(cls, v, values):
+        # Si custom_prompt est fourni, on est en mode avancé
+        if v is not None:
+            if not v.strip():
+                raise ValueError('Custom prompt cannot be empty')
         return v
 
 

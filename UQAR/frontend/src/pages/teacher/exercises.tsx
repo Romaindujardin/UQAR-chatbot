@@ -42,6 +42,10 @@ interface Exercise {
 export default function TeacherExercisesPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null); // Store user info
+  const [advancedMode, setAdvancedMode] = useState<boolean>(false);
+  const [customPrompt, setCustomPrompt] = useState<string>("");
+  const [tempFileContent, setTempFileContent] = useState<string>("");
+  const [uploadingTempFile, setUploadingTempFile] = useState<boolean>(false);
   
   const logout = () => {
     localStorage.removeItem("access_token");
@@ -61,6 +65,8 @@ export default function TeacherExercisesPage() {
   const [isGeneratingExercises, setIsGeneratingExercises] = useState<boolean>(false);
   const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -152,6 +158,23 @@ export default function TeacherExercisesPage() {
       setIsLoadingExercises(false);
     }
   };
+
+  const handleTempFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingTempFile(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      setTempFileContent(text);
+      setUploadingTempFile(false);
+    };
+    reader.onerror = () => {
+      toast.error("Erreur lors de la lecture du fichier temporaire");
+      setUploadingTempFile(false);
+    };
+    reader.readAsText(file);
+  };
   
   const handleGenerateExercises = async () => {
     if (selectedSectionId === null) {
@@ -160,8 +183,12 @@ export default function TeacherExercisesPage() {
     }
     setIsGeneratingExercises(true);
     setError(null);
-    const options = { num_questions: numQuestions, difficulty, exercise_type: exerciseType };
-    console.log("Generating exercises for section:", selectedSectionId, "with options:", options);
+    let options: any;
+    if (advancedMode) {
+      options = { custom_prompt: customPrompt, temp_content: tempFileContent };
+    } else {
+      options = { num_questions: numQuestions, difficulty, exercise_type: exerciseType };
+    }    console.log("Generating exercises for section:", selectedSectionId, "with options:", options);
     toast(`Génération d'exercices pour la section ${selectedSectionId}...`);
 
     try {
@@ -201,6 +228,47 @@ export default function TeacherExercisesPage() {
     }
   };
 
+  const startEdit = (q: Question) => {
+    setEditingQuestionId(q.id);
+    setEditedQuestion({ ...q });
+  };
+
+  const cancelEdit = () => {
+    setEditingQuestionId(null);
+    setEditedQuestion({});
+  };
+
+  const saveEdit = async (exerciseId: number, qId: number) => {
+    try {
+      toast.loading("Sauvegarde de la question...");
+      
+      // Envoyer les modifications au backend
+      await api.put(`/api/exercises/questions/${qId}`, editedQuestion);
+      
+      toast.dismiss();
+      toast.success("Question modifiée avec succès");
+      
+      // Mettre à jour l'état local
+      setExercises(prev =>
+        prev.map(ex =>
+          ex.id === exerciseId
+            ? {
+                ...ex,
+                questions: ex.questions.map(q =>
+                  q.id === qId ? { ...q, ...editedQuestion } : q
+                )
+              }
+            : ex
+        )
+      );
+      
+      cancelEdit();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Erreur lors de la modification de la question:", error);
+      toast.error(error.response?.data?.detail || "Erreur lors de la modification de la question");
+    }
+  };
 
   const selectedSectionName = sections.find(s => s.id === selectedSectionId)?.name || "N/A";
 
@@ -307,49 +375,77 @@ export default function TeacherExercisesPage() {
                   <p className="text-sm text-gray-500">Pour la section: <span className="font-medium">{selectedSectionName}</span></p>
                 </div>
                 <div className="card-body space-y-4">
-                  <div>
-                    <label htmlFor="num-questions" className="block text-sm font-medium text-gray-700">
-                      Nombre de Questions
-                    </label>
-                    <input
-                      type="number"
-                      id="num-questions"
-                      className="input mt-1 block w-full"
-                      value={numQuestions}
-                      onChange={(e) => setNumQuestions(parseInt(e.target.value))}
-                      min="1"
-                      max="20"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">
-                      Difficulté
-                    </label>
-                    <select
-                      id="difficulty"
-                      className="input mt-1 block w-full"
-                      value={difficulty}
-                      onChange={(e) => setDifficulty(e.target.value)}
-                    >
-                      <option value="easy">Facile</option>
-                      <option value="medium">Moyen</option>
-                      <option value="hard">Difficile</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="exercise-type" className="block text-sm font-medium text-gray-700">
-                      Type d'Exercice
-                    </label>
-                    <select
-                      id="exercise-type"
-                      className="input mt-1 block w-full"
-                      value={exerciseType}
-                      onChange={(e) => setExerciseType(e.target.value)}
-                    >
-                      <option value="mcq">Choix Multiple (QCM)</option>
-                      <option value="open_ended">Question Ouverte</option>
-                    </select>
-                  </div>
+                {advancedMode ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Prompt personnalisé</label>
+                        <textarea
+                          className="input mt-1 block w-full"
+                          rows={4}
+                          value={customPrompt}
+                          onChange={(e) => setCustomPrompt(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Document temporaire</label>
+                        <input type="file" className="input mt-1 block w-full" onChange={handleTempFile} />
+                        {uploadingTempFile && <p className="text-sm text-gray-500 mt-1">Lecture du fichier...</p>}
+                        {!uploadingTempFile && tempFileContent && <p className="text-xs text-gray-500 mt-1">Fichier chargé</p>}
+                      </div>
+                      <button onClick={() => setAdvancedMode(false)} className="btn-outline w-full">
+                        Mode basique
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label htmlFor="num-questions" className="block text-sm font-medium text-gray-700">
+                          Nombre de Questions
+                        </label>
+                        <input
+                          type="number"
+                          id="num-questions"
+                          className="input mt-1 block w-full"
+                          value={numQuestions}
+                          onChange={(e) => setNumQuestions(parseInt(e.target.value))}
+                          min="1"
+                          max="20"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">
+                          Difficulté
+                        </label>
+                        <select
+                          id="difficulty"
+                          className="input mt-1 block w-full"
+                          value={difficulty}
+                          onChange={(e) => setDifficulty(e.target.value)}
+                        >
+                          <option value="easy">Facile</option>
+                          <option value="medium">Moyen</option>
+                          <option value="hard">Difficile</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="exercise-type" className="block text-sm font-medium text-gray-700">
+                          Type d'Exercice
+                        </label>
+                        <select
+                          id="exercise-type"
+                          className="input mt-1 block w-full"
+                          value={exerciseType}
+                          onChange={(e) => setExerciseType(e.target.value)}
+                        >
+                          <option value="mcq">Choix Multiple (QCM)</option>
+                          <option value="open_ended">Question Ouverte</option>
+                        </select>
+                      </div>
+                      <button onClick={() => setAdvancedMode(true)} className="btn-outline w-full">
+                        Options avancées
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={handleGenerateExercises}
                     className="btn-primary w-full"
@@ -410,32 +506,67 @@ export default function TeacherExercisesPage() {
                             {exercise.questions && exercise.questions.length > 0 ? (
                               exercise.questions.map((question, qIndex) => (
                                 <div key={question.id} className="p-3 border rounded-md bg-gray-50 shadow-sm">
-                                  <p className="font-medium text-gray-800">Q{qIndex + 1}: {question.text}</p>
-                                  <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Type: {question.question_type}</p>
-                                  {question.question_type === 'mcq' && question.options && (
-                                    <div className="mt-2">
-                                      <p className="text-sm font-medium text-gray-700">Options:</p>
-                                      <ul className="list-disc pl-5 mt-1 space-y-1">
-                                        {question.options.map((option, oIndex) => (
-                                          <li key={oIndex} className={`text-sm ${option === question.correct_answer ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
-                                            {option}
-                                            {option === question.correct_answer && <span className="text-green-600 ml-2">(Correct)</span>}
-                                          </li>
-                                        ))}
-                                      </ul>
+                                  {editingQuestionId === question.id ? (
+                                    <div className="space-y-2">
+                                      <input
+                                        type="text"
+                                        className="input w-full"
+                                        value={editedQuestion.text || ''}
+                                        onChange={e => setEditedQuestion({...editedQuestion, text: e.target.value})}
+                                      />
+                                      {question.question_type === 'mcq' && (
+                                        <textarea
+                                          className="input w-full"
+                                          value={(editedQuestion.options || question.options || []).join('\n')}
+                                          onChange={e => setEditedQuestion({...editedQuestion, options: e.target.value.split('\n')})}
+                                        />
+                                      )}
+                                      <input
+                                        type="text"
+                                        className="input w-full"
+                                        value={editedQuestion.correct_answer || ''}
+                                        onChange={e => setEditedQuestion({...editedQuestion, correct_answer: e.target.value})}
+                                      />
+                                      <textarea
+                                        className="input w-full"
+                                        value={editedQuestion.explanation || ''}
+                                        onChange={e => setEditedQuestion({...editedQuestion, explanation: e.target.value})}
+                                      />
+                                      <div className="flex space-x-2">
+                                        <button className="btn-secondary btn-sm" onClick={() => saveEdit(exercise.id, question.id)}>Sauvegarder</button>
+                                        <button className="btn-outline btn-sm" onClick={cancelEdit}>Annuler</button>
+                                      </div>
                                     </div>
-                                  )}
-                                   {question.question_type === 'mcq' && !question.correct_answer && (
-                                     <p className="text-sm text-orange-600 mt-1">Note: La réponse correcte n'est pas définie pour ce QCM.</p>
-                                   )}
-                                  {question.explanation && (
-                                    <div className="mt-2">
-                                      <p className="text-sm font-medium text-gray-700">Explication:</p>
-                                      <p className="text-sm text-gray-600 bg-blue-50 p-2 rounded">{question.explanation}</p>
-                                    </div>
-                                  )}
-                                  {!question.explanation && (
-                                     <p className="text-sm text-gray-500 mt-1">Aucune explication fournie.</p>
+                                  ) : (
+                                    <>
+                                      <p className="font-medium text-gray-800">Q{qIndex + 1}: {question.text}</p>
+                                      <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Type: {question.question_type}</p>
+                                      {question.question_type === 'mcq' && question.options && (
+                                        <div className="mt-2">
+                                          <p className="text-sm font-medium text-gray-700">Options:</p>
+                                          <ul className="list-disc pl-5 mt-1 space-y-1">
+                                            {question.options.map((option, oIndex) => (
+                                              <li key={oIndex} className={`text-sm ${option === question.correct_answer ? 'font-semibold text-green-700' : 'text-gray-700'}`}>{option}{option === question.correct_answer && <span className="text-green-600 ml-2">(Correct)</span>}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      {question.question_type === 'mcq' && !question.correct_answer && (
+                                         <p className="text-sm text-orange-600 mt-1">Note: La réponse correcte n'est pas définie pour ce QCM.</p>
+                                      )}
+                                      {question.explanation && (
+                                        <div className="mt-2">
+                                          <p className="text-sm font-medium text-gray-700">Explication:</p>
+                                          <p className="text-sm text-gray-600 bg-blue-50 p-2 rounded">{question.explanation}</p>
+                                        </div>
+                                      )}
+                                      {!question.explanation && (
+                                         <p className="text-sm text-gray-500 mt-1">Aucune explication fournie.</p>
+                                      )}
+                                      <div className="mt-2">
+                                        <button className="btn-outline btn-sm" onClick={() => startEdit(question)}>Modifier</button>
+                                      </div>
+                                    </>
                                   )}
                                 </div>
                               ))

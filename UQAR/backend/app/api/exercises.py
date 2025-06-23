@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
+from datetime import datetime
 
 from ..core.database import get_db
 from ..models import User, Exercise, Question, Section, ExerciseSubmission
@@ -10,7 +11,7 @@ from ..models.exercise import ExerciseStatus
 from ..schemas.exercise_schemas import (
     ExerciseGenerateRequest, ExerciseResponse, ExerciseValidate,
     ExerciseSubmission as ExerciseSubmissionSchema, ExerciseResult,
-    QuestionType, DifficultyLevel, AnswerFeedback
+    QuestionType, DifficultyLevel, AnswerFeedback, QuestionUpdate
 )
 from ..services.exercise_service import ExerciseGenerationService, ExerciseFeedbackService
 from .auth import get_current_active_user
@@ -60,14 +61,27 @@ async def generate_exercises(
     # Generate exercises
     try:
         service = ExerciseGenerationService()
-        exercise = await service.generate_exercises(
-            db=db,
-            section_id=section_id,
-            num_questions=request.num_questions,
-            difficulty=request.difficulty,
-            exercise_type=request.exercise_type,
-            use_specific_documents=request.use_specific_documents
-        )
+        
+        # Détecter le mode de génération
+        if request.custom_prompt:
+            # Mode avancé
+            exercise = await service.generate_exercises_advanced(
+                db=db,
+                section_id=section_id,
+                custom_prompt=request.custom_prompt,
+                temp_content=request.temp_content,
+                use_specific_documents=request.use_specific_documents
+            )
+        else:
+            # Mode simple
+            exercise = await service.generate_exercises(
+                db=db,
+                section_id=section_id,
+                num_questions=request.num_questions or 5,
+                difficulty=request.difficulty or DifficultyLevel.MEDIUM,
+                exercise_type=request.exercise_type or QuestionType.MCQ,
+                use_specific_documents=request.use_specific_documents
+            )
         
         try:
             # The 'exercise' object returned by the service should now have 'questions' eagerly loaded.
@@ -214,6 +228,53 @@ async def validate_exercise(
     db.refresh(exercise)
     
     return ExerciseResponse.from_orm(exercise)
+
+
+@router.put("/questions/{question_id}")
+async def update_question(
+    question_id: int,
+    question_update: QuestionUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Modifier une question (Enseignant seulement)"""
+    
+    if current_user.role != UserRole.TEACHER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les enseignants peuvent modifier des questions"
+        )
+    
+    # Get the question with its exercise
+    question = db.query(Question).options(
+        joinedload(Question.exercise).joinedload(Exercise.section)
+    ).filter(Question.id == question_id).first()
+    
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question non trouvée"
+        )
+    
+    # Check if teacher owns the section
+    if question.exercise.section.teacher_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous ne pouvez modifier que les questions de vos sections"
+        )
+    
+    # Update the question fields
+    update_data = question_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(question, field, value)
+    
+    # Update the exercise's updated_at timestamp
+    question.exercise.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(question)
+    
+    return {"message": "Question mise à jour avec succès", "question_id": question_id}
 
 
 @router.delete("/exercises/{exercise_id}")
