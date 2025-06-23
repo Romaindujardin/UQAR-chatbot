@@ -18,6 +18,7 @@ interface Exercise {
   id: number;
   section_id: number;
   status: string;
+  title?: string; // Titre personnalisé de l'exercice
   questions: Question[];
   created_at: string;
   updated_at: string;
@@ -471,7 +472,7 @@ export default function StudentExercisesPage() {
                                   : 'hover:bg-gray-100'
                               }`}
                             >
-                              <div className="font-medium">Exercice {index + 1}</div>
+                              <div className="font-medium">{exercise.title || `Exercice #${exercise.id}`}</div>
                               <div className="text-sm text-gray-500">
                                 {exercise.questions.length} questions
                               </div>
@@ -500,7 +501,7 @@ export default function StudentExercisesPage() {
                   <div className="card">
                     <div className="card-header">
                       <h2 className="text-xl font-semibold">
-                        Exercice - {selectedExercise.questions.length} questions
+                        {selectedExercise.title || `Exercice #${selectedExercise.id}`} - {selectedExercise.questions.length} questions
                       </h2>
                     </div>
                     <div className="card-body">

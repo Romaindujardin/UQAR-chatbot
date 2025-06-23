@@ -77,6 +77,7 @@ class ExerciseGenerateRequest(BaseModel):
 class ExerciseBase(BaseModel):
     section_id: int
     status: str = Field("pending", description="Exercise status: pending, validated, generating")
+    title: Optional[str] = Field(None, description="Exercise title")
 
 
 class ExerciseCreate(ExerciseBase):
@@ -85,6 +86,7 @@ class ExerciseCreate(ExerciseBase):
 
 class ExerciseUpdate(BaseModel):
     status: Optional[str] = None
+    title: Optional[str] = None
     questions: Optional[List[QuestionCreate]] = None
 
 

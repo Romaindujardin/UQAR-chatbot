@@ -31,11 +31,23 @@ interface StudentStats {
   chat_sessions: number;
 }
 
+interface ExerciseHistory {
+  submission_id: number;
+  exercise_id: number;
+  exercise_title: string;
+  section_name: string;
+  score: number;
+  percentage: number;
+  submitted_at: string;
+  questions_count: number;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [stats, setStats] = useState<StudentStats>({ total_exercises: 0, completed_exercises: 0, chat_sessions: 0 });
+  const [exerciseHistory, setExerciseHistory] = useState<ExerciseHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sectionDocuments, setSectionDocuments] = useState<Record<number, Document[] | 'loading' | 'error'>>({});
 
@@ -59,7 +71,35 @@ export default function StudentDashboard() {
     setUser(parsedUser);
     loadSections();
     loadStudentStats();
+    loadExerciseHistory();
   }, [router]);
+
+  const loadExerciseHistory = async () => {
+    try {
+      console.log("Chargement de l'historique des exercices...");
+      
+      const token = localStorage.getItem("access_token");
+      
+      const response = await fetch("/api/students/history?limit=5", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Historique récupéré:", data);
+      setExerciseHistory(data);
+    } catch (error) {
+      console.error("Erreur lors du chargement de l'historique:", error);
+      // Ne pas afficher d'erreur toast si l'étudiant n'a pas encore fait d'exercices
+    }
+  };
 
   const loadStudentStats = async () => {
     try {
@@ -494,27 +534,79 @@ export default function StudentDashboard() {
             </div>
 
             <div className="card-body">
-              <div className="text-center py-8">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  Aucune activité récente
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Commencez par explorer les cours disponibles.
-                </p>
-              </div>
+              {exerciseHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    Aucun exercice réalisé
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Commencez par faire quelques exercices pour voir votre activité ici.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {exerciseHistory.map((item) => (
+                    <div
+                      key={item.submission_id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          item.percentage >= 80 ? 'bg-green-100 text-green-600' :
+                          item.percentage >= 60 ? 'bg-yellow-100 text-yellow-600' :
+                          'bg-red-100 text-red-600'
+                        }`}>
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900">
+                            {item.exercise_title}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {item.section_name} • {item.questions_count} question{item.questions_count > 1 ? 's' : ''}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(item.submitted_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-lg font-semibold ${
+                          item.percentage >= 80 ? 'text-green-600' :
+                          item.percentage >= 60 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {item.percentage.toFixed(0)}%
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {item.score.toFixed(1)} pts
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

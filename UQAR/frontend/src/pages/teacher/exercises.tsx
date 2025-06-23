@@ -33,6 +33,7 @@ interface Exercise {
   id: number;
   section_id: number;
   status: string; // 'pending', 'validated', 'generating'
+  title?: string; // Titre personnalisé de l'exercice
   questions: Question[];
   created_at: string; // Assuming ISO string date
   updated_at: string; // Assuming ISO string date
@@ -67,6 +68,10 @@ export default function TeacherExercisesPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
+
+  // États pour l'édition des titres
+  const [editingTitleId, setEditingTitleId] = useState<number | null>(null);
+  const [editedTitle, setEditedTitle] = useState<string>("");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -267,6 +272,50 @@ export default function TeacherExercisesPage() {
       toast.dismiss();
       console.error("Erreur lors de la modification de la question:", error);
       toast.error(error.response?.data?.detail || "Erreur lors de la modification de la question");
+    }
+  };
+
+  // Fonctions pour l'édition du titre
+  const startTitleEdit = (exercise: Exercise) => {
+    setEditingTitleId(exercise.id);
+    setEditedTitle(exercise.title || `Exercice #${exercise.id}`);
+  };
+
+  const cancelTitleEdit = () => {
+    setEditingTitleId(null);
+    setEditedTitle("");
+  };
+
+  const saveTitleEdit = async (exerciseId: number) => {
+    if (!editedTitle.trim()) {
+      toast.error("Le titre ne peut pas être vide");
+      return;
+    }
+
+    try {
+      const response = await api.put(`/api/exercises/update-title`, {
+        exerciseId: exerciseId,
+        title: editedTitle.trim()
+      });
+      
+      toast.success("Titre mis à jour avec succès");
+      
+      // Mettre à jour l'exercice dans la liste
+      setExercises(prev => 
+        prev.map(exercise => 
+          exercise.id === exerciseId 
+            ? { ...exercise, title: editedTitle.trim() }
+            : exercise
+        )
+      );
+      
+      // Sortir du mode édition
+      setEditingTitleId(null);
+      setEditedTitle("");
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la mise à jour du titre:", error);
+      toast.error(error.response?.data?.detail || "Erreur lors de la mise à jour du titre");
     }
   };
 
@@ -472,9 +521,50 @@ export default function TeacherExercisesPage() {
                       {exercises.map((exercise) => (
                         <li key={exercise.id} className="p-4 border rounded-md shadow-sm bg-white">
                           <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="text-lg font-semibold">Exercice #{exercise.id}</h3>
-                                <div className="flex space-x-4 text-sm text-gray-500 mt-1">
+                            <div className="flex-1">
+                                {editingTitleId === exercise.id ? (
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <input
+                                      type="text"
+                                      className="input flex-1"
+                                      value={editedTitle}
+                                      onChange={(e) => setEditedTitle(e.target.value)}
+                                      onKeyPress={(e) => e.key === 'Enter' && saveTitleEdit(exercise.id)}
+                                      placeholder="Titre de l'exercice"
+                                      autoFocus
+                                    />
+                                    <button
+                                      onClick={() => saveTitleEdit(exercise.id)}
+                                      className="btn-secondary btn-sm"
+                                      title="Sauvegarder le titre"
+                                    >
+                                      ✓
+                                    </button>
+                                    <button
+                                      onClick={cancelTitleEdit}
+                                      className="btn-outline btn-sm"
+                                      title="Annuler"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <h3 className="text-lg font-semibold">
+                                      {exercise.title || `Exercice #${exercise.id}`}
+                                    </h3>
+                                    <button
+                                      onClick={() => startTitleEdit(exercise)}
+                                      className="text-gray-400 hover:text-gray-600 p-1"
+                                      title="Modifier le titre"
+                                    >
+                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                )}
+                                <div className="flex space-x-4 text-sm text-gray-500">
                                     <span>Statut: <span className={`font-medium ${exercise.status === 'validated' ? 'text-green-600' : exercise.status === 'pending' ? 'text-yellow-600' : 'text-blue-600'}`}>{exercise.status}</span></span>
                                     <span>Créé le: {new Date(exercise.created_at).toLocaleDateString()} {new Date(exercise.created_at).toLocaleTimeString()}</span>
                                     <span>Mis à jour le: {new Date(exercise.updated_at).toLocaleDateString()} {new Date(exercise.updated_at).toLocaleTimeString()}</span>

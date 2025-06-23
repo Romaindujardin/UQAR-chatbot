@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import datetime
+from sqlalchemy.sql import func
 
 from ..core.database import get_db
 from ..models import User, Exercise, Question, Section, ExerciseSubmission
@@ -277,6 +278,75 @@ async def update_question(
     return {"message": "Question mise à jour avec succès", "question_id": question_id}
 
 
+@router.put("/exercises/{exercise_id}/title")
+async def update_exercise_title(
+    exercise_id: int,
+    request: dict,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Mettre à jour le titre d'un exercice (Enseignant seulement)"""
+    
+    if current_user.role != UserRole.TEACHER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les enseignants peuvent modifier les exercices"
+        )
+    
+    # Récupérer le titre depuis le body
+    title = request.get("title", "").strip()
+    
+    # Récupérer l'exercice
+    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Exercice non trouvé"
+        )
+    
+    # Vérifier que l'enseignant est propriétaire de la section
+    if exercise.section.teacher_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous ne pouvez modifier que vos propres exercices"
+        )
+    
+    # Valider le titre
+    if not title or len(title) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le titre ne peut pas être vide"
+        )
+    
+    if len(title) > 200:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le titre ne peut pas dépasser 200 caractères"
+        )
+    
+    try:
+        # Mettre à jour le titre
+        exercise.title = title
+        exercise.updated_at = func.now()
+        db.commit()
+        
+        # Recharger l'exercice avec ses relations
+        db.refresh(exercise)
+        
+        return {
+            "message": "Titre mis à jour avec succès",
+            "exercise_id": exercise.id,
+            "new_title": exercise.title
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de la mise à jour du titre: {str(e)}"
+        )
+
+
 @router.delete("/exercises/{exercise_id}")
 async def delete_exercise(
     exercise_id: int,
@@ -355,6 +425,62 @@ async def get_student_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de la récupération des statistiques: {str(e)}"
+        )
+
+
+@router.get("/students/history")
+async def get_student_exercise_history(
+    limit: int = 10,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Obtenir l'historique des exercices complétés par l'étudiant"""
+    
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les étudiants peuvent accéder à cet historique"
+        )
+    
+    try:
+        # Récupérer les submissions de l'étudiant avec les informations des exercices
+        submissions = db.query(ExerciseSubmission).join(
+            Exercise, ExerciseSubmission.exercise_id == Exercise.id
+        ).join(
+            Section, Exercise.section_id == Section.id
+        ).filter(
+            ExerciseSubmission.student_id == current_user.id,
+            Exercise.status == ExerciseStatus.VALIDATED
+        ).order_by(
+            ExerciseSubmission.submitted_at.desc()
+        ).limit(limit).all()
+        
+        # Formater les données pour le frontend
+        history = []
+        for submission in submissions:
+            exercise = submission.exercise
+            section = exercise.section
+            
+            # Utiliser le titre personnalisé ou un titre par défaut
+            exercise_title = exercise.title if exercise.title else f"Exercice #{exercise.id}"
+            
+            history.append({
+                "submission_id": submission.id,
+                "exercise_id": exercise.id,
+                "exercise_title": exercise_title,
+                "section_name": section.name,
+                "score": submission.score,
+                "percentage": submission.percentage,
+                "submitted_at": submission.submitted_at.isoformat(),
+                "questions_count": len(exercise.questions) if exercise.questions else 0
+            })
+        
+        return history
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de la récupération de l'historique: {str(e)}"
         )
 
 
