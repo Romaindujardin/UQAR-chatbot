@@ -13,6 +13,12 @@ interface Section {
   created_at: string;
 }
 
+interface Student {
+  id: number;
+  full_name: string;
+  email: string;
+}
+
 export default function TeacherDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -23,6 +29,11 @@ export default function TeacherDashboard() {
     name: "",
     description: "",
   });
+
+  const [feedbackSectionId, setFeedbackSectionId] = useState<number | "">("");
+  const [students, setStudents] = useState<Student[]>([]);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     // Vérifier l'authentification
@@ -160,6 +171,38 @@ export default function TeacherDashboard() {
       } else {
         toast.error("Échec de la suppression de la section.");
       }
+    }
+  };
+
+  useEffect(() => {
+    if (feedbackSectionId) {
+      loadStudents(Number(feedbackSectionId));
+    } else {
+      setStudents([]);
+    }
+  }, [feedbackSectionId]);
+
+  const loadStudents = async (sectionId: number) => {
+    try {
+      const res = await api.get(`/api/feedback/sections/${sectionId}/students`);
+      setStudents(res.data);
+    } catch (error: any) {
+      console.error('Erreur chargement étudiants', error);
+      toast.error("Erreur lors du chargement des étudiants");
+    }
+  };
+
+  const analyzeStudent = async (studentId: number) => {
+    if (!feedbackSectionId) return;
+    setIsAnalyzing(true);
+    try {
+      const res = await api.post(`/api/feedback/sections/${feedbackSectionId}/students/${studentId}/analyze`);
+      setAnalysisResult(res.data.analysis);
+    } catch (error: any) {
+      console.error('Erreur analyse', error);
+      toast.error("Analyse impossible");
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -441,6 +484,59 @@ export default function TeacherDashboard() {
               )}
             </div>
           </div>
+          {/* Feedback section */}
+          <div className="card mt-8">
+            <div className="card-header">
+              <h3 className="text-lg font-medium text-gray-900">Feedback étudiants</h3>
+            </div>
+            <div className="card-body">
+              <div className="mb-4">
+                <label className="mr-2 text-sm">Section:</label>
+                <select
+                  className="input"
+                  value={feedbackSectionId}
+                  onChange={(e) => setFeedbackSectionId(e.target.value ? Number(e.target.value) : "")}
+                >
+                  <option value="">-- Choisir --</option>
+                  {sections.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              {feedbackSectionId && (
+                <div className="overflow-x-auto">
+                  {students.length === 0 ? (
+                    <p className="text-gray-600">Aucun étudiant pour cette section.</p>
+                  ) : (
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                          <th className="px-4 py-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {students.map((stu) => (
+                          <tr key={stu.id}>
+                            <td className="px-4 py-2 whitespace-nowrap">{stu.full_name}</td>
+                            <td className="px-4 py-2 text-right">
+                              <button
+                                onClick={() => analyzeStudent(stu.id)}
+                                className="btn-primary px-3 py-1 text-sm"
+                                disabled={isAnalyzing}
+                              >
+                                Analyser
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </main>
       </div>
 
@@ -506,6 +602,19 @@ export default function TeacherDashboard() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {analysisResult && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Analyse de l'étudiant</h3>
+              <p className="whitespace-pre-line text-sm mb-4">{analysisResult}</p>
+              <div className="flex justify-end">
+                <button onClick={() => setAnalysisResult(null)} className="btn-primary">Fermer</button>
+              </div>
             </div>
           </div>
         </div>

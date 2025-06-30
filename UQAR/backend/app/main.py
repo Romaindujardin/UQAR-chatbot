@@ -10,7 +10,7 @@ from .core.database import Base, engine
 
 # Import API routers
 try:
-    from .api import auth, users, sections, documents, exercises, chat
+    from .api import auth, users, sections, documents, exercises, chat, feedback
     all_routers_available = True
 except ImportError as e:
     logging.error(f"Error importing API routers: {e}")
@@ -48,6 +48,7 @@ if all_routers_available:
     app.include_router(documents.router, prefix="/api/documents")
     app.include_router(exercises.router, prefix="/api/exercises")
     app.include_router(chat.router, prefix="/api/chat")
+    app.include_router(feedback.router, prefix="/api/feedback")
 
 # Logging middleware
 @app.middleware("http")
