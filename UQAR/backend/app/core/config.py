@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = os.environ.get("OLLAMA_MODEL", "llama3.1:70b")
     OLLAMA_MAX_TOKENS: int = 2048
     OLLAMA_TEMPERATURE: float = 0.7
+    OLLAMA_TIMEOUT: float = float(os.environ.get("OLLAMA_TIMEOUT", 300))
     
     # JWT et sécurité
     JWT_SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY", "af477b8d25c0527311f097b7098bf98c60b34a6030294231574358ee4ecf4822")
@@ -92,5 +93,6 @@ def get_ollama_config() -> dict:
         "base_url": f"http://{settings.OLLAMA_HOST}:{settings.OLLAMA_PORT}",
         "model": settings.OLLAMA_MODEL,
         "max_tokens": settings.OLLAMA_MAX_TOKENS,
-        "temperature": settings.OLLAMA_TEMPERATURE
-    } 
+        "temperature": settings.OLLAMA_TEMPERATURE,
+        "timeout": settings.OLLAMA_TIMEOUT,
+    }

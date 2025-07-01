@@ -17,6 +17,7 @@ class OllamaService:
         self.model = self.config["model"]
         self.max_tokens = self.config["max_tokens"]
         self.temperature = self.config["temperature"]
+        self.timeout = self.config.get("timeout", 300)
         logger.info(f"OllamaService initialized with model: {self.model} at {self.base_url}")
 
     async def generate_response(
@@ -30,7 +31,7 @@ class OllamaService:
         full_prompt = self._build_prompt(prompt, context, system_prompt)
 
         try:
-            timeout = 120.0
+            timeout = self.timeout
             is_healthy = await self.health_check()
             if not is_healthy:
                 logger.error("Ollama service is not healthy.")
@@ -90,7 +91,7 @@ class OllamaService:
         full_prompt = self._build_prompt(prompt, context, system_prompt)
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
                 async with client.stream(
                     "POST",
                     f"{self.base_url}/api/generate",

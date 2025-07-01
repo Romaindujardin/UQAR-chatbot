@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
 import { toast } from "react-hot-toast";
 
-// Utiliser le proxy Next.js pour API
-const API_URL = "";
+// Utiliser l'URL du backend directement pour éviter le timeout de 30s du proxy Next.js
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Log de configuration
 console.log("Configuration API avec proxy Next.js");
@@ -15,7 +15,7 @@ const api = axios.create({
   },
   // Ajouter des options pour résoudre les problèmes de CORS
   withCredentials: true,
-  timeout: 100000, // Augmenter le timeout à 100 secondes
+  timeout: 300000, // Augmenter le timeout à 300 secondes
 });
 
 // Interface pour la file d'attente

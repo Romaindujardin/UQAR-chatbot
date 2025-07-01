@@ -39,33 +39,45 @@ async def get_section_students(section_id: int, current_user: User = Depends(get
 
 @router.post("/sections/{section_id}/students/{student_id}/analyze")
 async def analyze_student(section_id: int, student_id: int, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    if current_user.role != UserRole.TEACHER:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès interdit")
+    import logging
+    import traceback
+    logger = logging.getLogger(__name__)
+    
+    try:
+        if current_user.role != UserRole.TEACHER:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès interdit")
 
-    section = db.query(Section).filter(Section.id == section_id, Section.teacher_id == current_user.id).first()
-    if not section:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section non trouvée")
+        section = db.query(Section).filter(Section.id == section_id, Section.teacher_id == current_user.id).first()
+        if not section:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section non trouvée")
 
-    # Fetch exercise submissions
-    submissions = db.query(ExerciseSubmission).join(ExerciseSubmission.exercise).filter(Exercise.section_id == section_id, ExerciseSubmission.student_id == student_id).all()
+        # Fetch exercise submissions
+        submissions = db.query(ExerciseSubmission).join(ExerciseSubmission.exercise).filter(Exercise.section_id == section_id, ExerciseSubmission.student_id == student_id).all()
 
-    # Fetch chat messages
-    chats = db.query(ChatMessage).join(ChatSession).filter(ChatSession.section_id == section_id, ChatSession.user_id == student_id).order_by(ChatMessage.created_at).all()
+        # Fetch chat messages
+        chats = db.query(ChatMessage).join(ChatSession).filter(ChatSession.section_id == section_id, ChatSession.user_id == student_id).order_by(ChatMessage.created_at).all()
 
-    content = []
-    for sub in submissions:
-        # Calculer le total des points des questions associées à cet exercice
-        total_points = sum(question.points for question in sub.exercise.questions) if sub.exercise.questions else 0
-        content.append(f"Exercice {sub.exercise_id} score {sub.score}/{total_points}\n")
-        for qid, ans in sub.answers.items():
-            content.append(f"Q{qid}: {ans}\n")
-    for msg in chats:
-        role = "ETUDIANT" if not msg.is_assistant else "BOT"
-        content.append(f"[{role}] {msg.content}\n")
+        content = []
+        for sub in submissions:
+            # Calculer le total des points des questions associées à cet exercice
+            total_points = sum(question.points for question in sub.exercise.questions) if sub.exercise.questions else 0
+            content.append(f"Exercice {sub.exercise_id} score {sub.score}/{total_points}\n")
+            for qid, ans in sub.answers.items():
+                content.append(f"Q{qid}: {ans}\n")
+        for msg in chats:
+            role = "ETUDIANT" if not msg.is_assistant else "BOT"
+            content.append(f"[{role}] {msg.content}\n")
 
-    prompt = "\n".join(content)
-    system_prompt = "Vous êtes un tuteur bienveillant. Analysez les réponses de l'étudiant et identifiez ses lacunes principales."
-    ollama = OllamaService()
-    analysis = await ollama.generate_response(prompt=prompt, system_prompt=system_prompt)
+        prompt = "\n".join(content)
+        system_prompt = "Vous êtes un tuteur bienveillant. Analysez les réponses de l'étudiant et identifiez ses lacunes principales."
+        ollama = OllamaService()
+        analysis = await ollama.generate_response(prompt=prompt, system_prompt=system_prompt)
 
-    return {"analysis": analysis.strip()}
+        return {"analysis": analysis.strip()}
+    except Exception as e:
+        logger.error(f"Error in analyze_student: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de l'analyse: {str(e)}"
+        )
