@@ -136,6 +136,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const rejectUser = async (userId: number) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.patch(
+        `${apiBaseUrl}/api/users/${userId}/reject`,
+        {},
+        { headers }
+      );
+
+      toast.success("Utilisateur refusé avec succès");
+      loadData(); // Recharger les données
+    } catch (error) {
+      console.error("Erreur lors du refus:", error);
+      toast.error("Erreur lors du refus");
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
@@ -401,6 +420,12 @@ export default function AdminDashboard() {
                                   className="btn-primary mr-2"
                                 >
                                   Valider
+                                </button>
+                                <button
+                                  onClick={() => rejectUser(user.id)}
+                                  className="btn-danger"
+                                >
+                                  Refuser
                                 </button>
                               </td>
                             </tr>

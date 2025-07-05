@@ -111,6 +111,44 @@ async def validate_user(
     return {"message": f"Utilisateur {user.username} validé avec succès"}
 
 
+@router.patch("/{user_id}/reject")
+async def reject_user(
+    user_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Refuser un utilisateur en attente"""
+    # Check if user is super_admin
+    is_admin = (current_user.role == UserRole.SUPER_ADMIN or 
+                (hasattr(current_user.role, 'value') and current_user.role.value == 'super_admin') or
+                current_user.role == 'super_admin')
+    
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permissions insuffisantes"
+        )
+        
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    if user.status != UserStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="L'utilisateur n'est pas en attente de validation"
+        )
+    
+    user.status = UserStatus.DELETED
+    db.commit()
+    
+    return {"message": f"Utilisateur {user.username} refusé avec succès"}
+
+
 @router.get("/", response_model=List[UserResponse])
 async def get_all_users(
     current_user: User = Depends(get_current_active_user),
