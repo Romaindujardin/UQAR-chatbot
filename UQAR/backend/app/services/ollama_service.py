@@ -133,6 +133,9 @@ class OllamaService:
 
         system = system_prompt or (
             "Tu es un assistant éducatif pour l'UQAR. Réponds de manière pédagogique et précise. "
+            "Utilise le format Markdown pour structurer tes réponses : "
+            "**gras** pour les mots importants, `code` pour les termes techniques, "
+            "```code``` pour les blocs de code, ## pour les titres, et - pour les listes. "
             "Si tu utilises des informations du contexte, cite tes sources."
         )
 

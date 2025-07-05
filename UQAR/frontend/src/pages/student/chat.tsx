@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import api from "@/utils/api";
 import toast from "react-hot-toast";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 interface Section {
   id: number;
@@ -578,15 +579,21 @@ export default function StudentChat() {
                           className={`max-w-3xl rounded-lg px-4 py-2 ${
                             message.is_user
                               ? "bg-primary-600 text-white"
-                              : "bg-white border border-gray-200"
+                              : "bg-white border border-gray-200 chat-bubble-assistant"
                           }`}
                         >
                           <div className="text-sm">
-                            {message.content.split("\n").map((line, i) => (
-                              <p key={i} className={i > 0 ? "mt-2" : ""}>
-                                {line}
-                              </p>
-                            ))}
+                            {message.is_user ? (
+                              // Message utilisateur - affichage simple
+                              message.content.split("\n").map((line, i) => (
+                                <p key={i} className={i > 0 ? "mt-2" : ""}>
+                                  {line}
+                                </p>
+                              ))
+                            ) : (
+                              // Message assistant - rendu Markdown
+                              <MarkdownRenderer content={message.content} />
+                            )}
                             {/* Indicateur de frappe pour les messages en cours de streaming */}
                             {!message.is_user && isStreaming && message.content === "" && (
                               <div className="flex items-center space-x-1 text-gray-500">

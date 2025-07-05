@@ -177,6 +177,46 @@ body {
   @apply bg-white border border-gray-200 text-gray-900 rounded-bl-none;
 }
 
+/* Styles pour le rendu Markdown dans les messages */
+.chat-bubble-assistant .prose {
+  @apply text-gray-900;
+}
+
+.chat-bubble-assistant .prose h1,
+.chat-bubble-assistant .prose h2,
+.chat-bubble-assistant .prose h3 {
+  @apply text-gray-900;
+}
+
+.chat-bubble-assistant .prose code {
+  @apply bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono;
+}
+
+.chat-bubble-assistant .prose pre {
+  @apply bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto my-2;
+}
+
+.chat-bubble-assistant .prose pre code {
+  @apply bg-transparent text-gray-100 p-0;
+}
+
+.chat-bubble-assistant .prose strong {
+  @apply font-semibold text-gray-900;
+}
+
+.chat-bubble-assistant .prose em {
+  @apply italic text-gray-700;
+}
+
+.chat-bubble-assistant .prose ul,
+.chat-bubble-assistant .prose ol {
+  @apply my-2;
+}
+
+.chat-bubble-assistant .prose li {
+  @apply mb-1;
+}
+
 /* Styles pour les exercices */
 .exercise-card {
   @apply card hover:shadow-md transition-shadow duration-200;
