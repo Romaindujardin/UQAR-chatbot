@@ -44,6 +44,8 @@ export default function StudentChat() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -149,9 +151,13 @@ export default function StudentChat() {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !selectedSession) {
+    if (!newMessage.trim() || !selectedSession || isSending || isStreaming) {
       return;
     }
+
+    setIsSending(true);
+    setIsStreaming(true);
+    setStreamingMessage("");
 
     const optimisticMessage = {
       id: Date.now(),
@@ -168,35 +174,120 @@ export default function StudentChat() {
     scrollToBottom();
 
     try {
-      const response = await api.post(
-        `/api/chat/sessions/${selectedSession.id}/messages`,
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/chat/sessions/${selectedSession.id}/messages/stream`,
         {
-          content: currentMessage,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: currentMessage,
+          }),
         }
       );
 
-      if (response.data && response.data.system_message) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          response.data.system_message,
-        ]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-        scrollToBottom();
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessageContent = "";
+      let assistantMessageId = null;
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+
+                if (data.error) {
+                  toast.error(data.error);
+                  setIsStreaming(false);
+                  setIsSending(false);
+                  return;
+                }
+
+                switch (data.type) {
+                  case "user_message":
+                    // Le message utilisateur est déjà affiché de manière optimiste
+                    break;
+
+                  case "assistant_start":
+                    // Démarrer l'affichage du message de l'assistant
+                    const startMessage = {
+                      id: Date.now() + 1,
+                      content: "",
+                      is_user: false,
+                      created_at: new Date().toISOString(),
+                    };
+                    setMessages((prev) => [...prev, startMessage]);
+                    assistantMessageId = startMessage.id;
+                    break;
+
+                  case "assistant_chunk":
+                    // Ajouter le chunk au message de l'assistant
+                    assistantMessageContent += data.content;
+                    setStreamingMessage(assistantMessageContent);
+                    
+                    // Mettre à jour le message en temps réel
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: assistantMessageContent }
+                          : msg
+                      )
+                    );
+                    scrollToBottom();
+                    break;
+
+                  case "assistant_message":
+                    // Message final de l'assistant
+                    if (data.done) {
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === assistantMessageId
+                            ? { ...msg, content: data.content, id: data.id }
+                            : msg
+                        )
+                      );
+                      setIsStreaming(false);
+                      setStreamingMessage("");
+                      scrollToBottom();
+                    }
+                    break;
+                }
+              } catch (parseError) {
+                console.error("Error parsing streaming data:", parseError);
+              }
+            }
+          }
+        }
       }
     } catch (error: any) {
       console.error("Erreur lors de l'envoi du message:", error);
+      toast.error("Erreur lors de l'envoi du message");
 
-      if (error.response && error.response.data && error.response.data.detail) {
-        toast.error(`Erreur: ${error.response.data.detail}`);
-      } else {
-        toast.error("Erreur lors de l'envoi du message");
-      }
-
+      // Supprimer le message optimiste en cas d'erreur
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg.id !== optimisticMessage.id)
       );
 
       setNewMessage(currentMessage);
+    } finally {
+      setIsSending(false);
+      setIsStreaming(false);
+      setStreamingMessage("");
     }
   };
 
@@ -496,6 +587,17 @@ export default function StudentChat() {
                                 {line}
                               </p>
                             ))}
+                            {/* Indicateur de frappe pour les messages en cours de streaming */}
+                            {!message.is_user && isStreaming && message.content === "" && (
+                              <div className="flex items-center space-x-1 text-gray-500">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                </div>
+                                <span className="text-xs">L'assistant écrit...</span>
+                              </div>
+                            )}
                           </div>
                           <div
                             className={`text-xs mt-1 ${
@@ -526,11 +628,14 @@ export default function StudentChat() {
                     />
                     <button
                       type="submit"
-                      disabled={isSending || !newMessage.trim()}
+                      disabled={isSending || isStreaming || !newMessage.trim()}
                       className="btn-primary"
                     >
-                      {isSending ? (
-                        <div className="spinner w-5 h-5"></div>
+                      {isSending || isStreaming ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="spinner w-5 h-5"></div>
+                          {isStreaming && <span className="text-xs">Génération...</span>}
+                        </div>
                       ) : (
                         <svg
                           className="h-5 w-5"

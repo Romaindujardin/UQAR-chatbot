@@ -447,49 +447,49 @@ export default function TeacherExercisesPage() {
                     </>
                   ) : (
                     <>
-                      <div>
-                        <label htmlFor="num-questions" className="block text-sm font-medium text-gray-700">
-                          Nombre de Questions
-                        </label>
-                        <input
-                          type="number"
-                          id="num-questions"
-                          className="input mt-1 block w-full"
-                          value={numQuestions}
-                          onChange={(e) => setNumQuestions(parseInt(e.target.value))}
-                          min="1"
-                          max="20"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">
-                          Difficulté
-                        </label>
-                        <select
-                          id="difficulty"
-                          className="input mt-1 block w-full"
-                          value={difficulty}
-                          onChange={(e) => setDifficulty(e.target.value)}
-                        >
-                          <option value="easy">Facile</option>
-                          <option value="medium">Moyen</option>
-                          <option value="hard">Difficile</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label htmlFor="exercise-type" className="block text-sm font-medium text-gray-700">
-                          Type d'Exercice
-                        </label>
-                        <select
-                          id="exercise-type"
-                          className="input mt-1 block w-full"
-                          value={exerciseType}
-                          onChange={(e) => setExerciseType(e.target.value)}
-                        >
-                          <option value="mcq">Choix Multiple (QCM)</option>
-                          <option value="open_ended">Question Ouverte</option>
-                        </select>
-                      </div>
+                  <div>
+                    <label htmlFor="num-questions" className="block text-sm font-medium text-gray-700">
+                      Nombre de Questions
+                    </label>
+                    <input
+                      type="number"
+                      id="num-questions"
+                      className="input mt-1 block w-full"
+                      value={numQuestions}
+                      onChange={(e) => setNumQuestions(parseInt(e.target.value))}
+                      min="1"
+                      max="20"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">
+                      Difficulté
+                    </label>
+                    <select
+                      id="difficulty"
+                      className="input mt-1 block w-full"
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value)}
+                    >
+                      <option value="easy">Facile</option>
+                      <option value="medium">Moyen</option>
+                      <option value="hard">Difficile</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="exercise-type" className="block text-sm font-medium text-gray-700">
+                      Type d'Exercice
+                    </label>
+                    <select
+                      id="exercise-type"
+                      className="input mt-1 block w-full"
+                      value={exerciseType}
+                      onChange={(e) => setExerciseType(e.target.value)}
+                    >
+                      <option value="mcq">Choix Multiple (QCM)</option>
+                      <option value="open_ended">Question Ouverte</option>
+                    </select>
+                  </div>
                       <button onClick={() => setAdvancedMode(true)} className="btn-outline w-full">
                         Options avancées
                       </button>
@@ -629,29 +629,29 @@ export default function TeacherExercisesPage() {
                                     </div>
                                   ) : (
                                     <>
-                                      <p className="font-medium text-gray-800">Q{qIndex + 1}: {question.text}</p>
-                                      <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Type: {question.question_type}</p>
-                                      {question.question_type === 'mcq' && question.options && (
-                                        <div className="mt-2">
-                                          <p className="text-sm font-medium text-gray-700">Options:</p>
-                                          <ul className="list-disc pl-5 mt-1 space-y-1">
-                                            {question.options.map((option, oIndex) => (
+                                  <p className="font-medium text-gray-800">Q{qIndex + 1}: {question.text}</p>
+                                  <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Type: {question.question_type}</p>
+                                  {question.question_type === 'mcq' && question.options && (
+                                    <div className="mt-2">
+                                      <p className="text-sm font-medium text-gray-700">Options:</p>
+                                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                                        {question.options.map((option, oIndex) => (
                                               <li key={oIndex} className={`text-sm ${option === question.correct_answer ? 'font-semibold text-green-700' : 'text-gray-700'}`}>{option}{option === question.correct_answer && <span className="text-green-600 ml-2">(Correct)</span>}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      )}
-                                      {question.question_type === 'mcq' && !question.correct_answer && (
-                                         <p className="text-sm text-orange-600 mt-1">Note: La réponse correcte n'est pas définie pour ce QCM.</p>
-                                      )}
-                                      {question.explanation && (
-                                        <div className="mt-2">
-                                          <p className="text-sm font-medium text-gray-700">Explication:</p>
-                                          <p className="text-sm text-gray-600 bg-blue-50 p-2 rounded">{question.explanation}</p>
-                                        </div>
-                                      )}
-                                      {!question.explanation && (
-                                         <p className="text-sm text-gray-500 mt-1">Aucune explication fournie.</p>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                   {question.question_type === 'mcq' && !question.correct_answer && (
+                                     <p className="text-sm text-orange-600 mt-1">Note: La réponse correcte n'est pas définie pour ce QCM.</p>
+                                   )}
+                                  {question.explanation && (
+                                    <div className="mt-2">
+                                      <p className="text-sm font-medium text-gray-700">Explication:</p>
+                                      <p className="text-sm text-gray-600 bg-blue-50 p-2 rounded">{question.explanation}</p>
+                                    </div>
+                                  )}
+                                  {!question.explanation && (
+                                     <p className="text-sm text-gray-500 mt-1">Aucune explication fournie.</p>
                                       )}
                                       <div className="mt-2">
                                         <button className="btn-outline btn-sm" onClick={() => startEdit(question)}>Modifier</button>

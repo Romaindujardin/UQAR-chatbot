@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
+import json
+import asyncio
 
 from ..core.database import get_db
 from ..schemas.chat_schemas import ChatSessionResponse, ChatMessageResponse, CreateSessionRequest, SendMessageRequest
@@ -167,6 +170,141 @@ async def send_message(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de l'envoi du message: {str(e)}"
         )
+
+
+@router.post("/sessions/{session_id}/messages/stream")
+async def send_message_stream(
+    session_id: int,
+    request: SendMessageRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Envoyer un message dans le chat RAG avec streaming"""
+    import logging
+    import traceback
+    from datetime import datetime
+    from ..models.section import Section
+    
+    logger = logging.getLogger(__name__)
+
+    async def generate_stream():
+        try:
+            logger.info(f"Streaming message request: session_id={session_id}, user_id={current_user.id}")
+
+            chat_service = ChatService(db)
+
+            # Vérifier la session
+            session = db.query(ChatSession).filter(
+                ChatSession.id == session_id,
+                ChatSession.user_id == current_user.id
+            ).first()
+
+            if not session:
+                yield f"data: {json.dumps({'error': 'Session non trouvée'})}\n\n"
+                return
+
+            # Sauvegarder le message utilisateur
+            user_message = ChatMessage(
+                session_id=session_id,
+                content=request.content,
+                is_assistant=False,
+                created_at=datetime.utcnow()
+            )
+            db.add(user_message)
+            db.flush()
+
+            # Envoyer le message utilisateur
+            yield f"data: {json.dumps({'type': 'user_message', 'content': request.content, 'id': user_message.id})}\n\n"
+
+            # Récupérer le contexte RAG
+            retrieved_context_texts = []
+            section = None
+            if chat_service.chroma_client and session.section_id:
+                section = db.query(Section).filter(Section.id == session.section_id).first()
+                if section and section.chroma_collection_name:
+                    try:
+                        collection = chat_service.chroma_client.get_collection(name=section.chroma_collection_name)
+                        results = collection.query(query_texts=[request.content], n_results=3)
+                        if results and results.get('documents') and results['documents'][0]:
+                            retrieved_context_texts = results['documents'][0]
+                    except Exception as e:
+                        logger.error(f"Error querying ChromaDB: {e}")
+
+            # Vérifier la pertinence
+            if section:
+                relevance_context = f"Nom de la section: {section.name}. Description: {section.description or ''}"
+                is_relevant = await chat_service.ollama_service.check_relevance(request.content, relevance_context)
+                
+                if not is_relevant:
+                    # Réponse non pertinente
+                    response_content = "Désolé, cette question ne semble pas liée au sujet de cette section."
+                    
+                    # Sauvegarder la réponse
+                    assistant_message = ChatMessage(
+                        session_id=session_id,
+                        content=response_content,
+                        is_assistant=True,
+                        created_at=datetime.utcnow()
+                    )
+                    db.add(assistant_message)
+                    session.last_message_at = datetime.utcnow()
+                    db.commit()
+                    
+                    yield f"data: {json.dumps({'type': 'assistant_message', 'content': response_content, 'id': assistant_message.id, 'done': True})}\n\n"
+                    return
+
+            # Générer la réponse en streaming
+            yield f"data: {json.dumps({'type': 'assistant_start'})}\n\n"
+            
+            response_content = ""
+            async for chunk in chat_service.ollama_service.generate_streaming_response(
+                prompt=request.content,
+                context=retrieved_context_texts if retrieved_context_texts else None
+            ):
+                response_content += chunk
+                yield f"data: {json.dumps({'type': 'assistant_chunk', 'content': chunk})}\n\n"
+
+            # Sauvegarder la réponse complète
+            assistant_message = ChatMessage(
+                session_id=session_id,
+                content=response_content,
+                is_assistant=True,
+                created_at=datetime.utcnow()
+            )
+            db.add(assistant_message)
+            
+            # Mettre à jour la session
+            session.last_message_at = datetime.utcnow()
+            
+            # Générer un titre si c'est le premier message
+            existing_count = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).count()
+            if existing_count <= 2:  # user_message + assistant_message
+                try:
+                    new_title = await chat_service.ollama_service.generate_title(request.content)
+                    session.title = new_title
+                except Exception:
+                    pass
+            
+            db.commit()
+            
+            yield f"data: {json.dumps({'type': 'assistant_message', 'content': response_content, 'id': assistant_message.id, 'done': True})}\n\n"
+
+        except Exception as e:
+            logger.error(f"Error in streaming: {e}")
+            logger.error(f"Error traceback: {traceback.format_exc()}")
+            yield f"data: {json.dumps({'error': f'Erreur lors de la génération: {str(e)}'})}\n\n"
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )
 
 
 @router.delete("/sessions/{session_id}")
