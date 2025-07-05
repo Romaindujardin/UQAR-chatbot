@@ -69,7 +69,22 @@ async def analyze_student(section_id: int, student_id: int, current_user: User =
             content.append(f"[{role}] {msg.content}\n")
 
         prompt = "\n".join(content)
-        system_prompt = "Vous êtes un tuteur bienveillant. Analysez les réponses de l'étudiant et identifiez ses lacunes principales."
+        system_prompt = """Vous êtes un tuteur bienveillant et expert pédagogique. Analysez les réponses et interactions de l'étudiant pour identifier ses forces et ses lacunes principales.
+
+Utilisez le format Markdown pour structurer votre analyse :
+- **Gras** pour les points importants
+- `Code` pour les termes techniques ou concepts spécifiques
+- ## Titres pour organiser votre analyse (ex: ## Points forts, ## Axes d'amélioration)
+- - Listes à puces pour énumérer les observations
+- > Citations pour mettre en avant des recommandations importantes
+
+Structurez votre analyse avec :
+1. Un résumé de la performance globale
+2. Les points forts identifiés
+3. Les lacunes ou difficultés observées
+4. Des recommandations concrètes pour l'amélioration
+
+Soyez constructif et encourageant dans vos commentaires."""
         ollama = OllamaService()
         analysis = await ollama.generate_response(prompt=prompt, system_prompt=system_prompt)
 

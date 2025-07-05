@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import toast from "react-hot-toast";
 import api from "@/utils/api";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 interface Section {
   id: number;
@@ -608,10 +609,12 @@ export default function TeacherDashboard() {
       )}
       {analysisResult && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Analyse de l'étudiant</h3>
-              <p className="whitespace-pre-line text-sm mb-4">{analysisResult}</p>
+              <div className="max-h-96 overflow-y-auto mb-4">
+                <MarkdownRenderer content={analysisResult} />
+              </div>
               <div className="flex justify-end">
                 <button onClick={() => setAnalysisResult(null)} className="btn-primary">Fermer</button>
               </div>
