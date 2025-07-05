@@ -18,6 +18,8 @@ interface Student {
   id: number;
   full_name: string;
   email: string;
+  has_feedback: boolean;
+  feedback_date: string | null;
 }
 
 export default function TeacherDashboard() {
@@ -199,11 +201,24 @@ export default function TeacherDashboard() {
     try {
       const res = await api.post(`/api/feedback/sections/${feedbackSectionId}/students/${studentId}/analyze`);
       setAnalysisResult(res.data.analysis);
+      // Reload students to update feedback status
+      loadStudents(Number(feedbackSectionId));
     } catch (error: any) {
       console.error('Erreur analyse', error);
       toast.error("Analyse impossible");
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const viewExistingFeedback = async (studentId: number) => {
+    if (!feedbackSectionId) return;
+    try {
+      const res = await api.get(`/api/feedback/sections/${feedbackSectionId}/students/${studentId}/feedback`);
+      setAnalysisResult(res.data.content);
+    } catch (error: any) {
+      console.error('Erreur récupération feedback', error);
+      toast.error("Impossible de récupérer le feedback");
     }
   };
 
@@ -513,21 +528,59 @@ export default function TeacherDashboard() {
                       <thead>
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                          <th className="px-4 py-2"></th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut Feedback</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {students.map((stu) => (
                           <tr key={stu.id}>
-                            <td className="px-4 py-2 whitespace-nowrap">{stu.full_name}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{stu.full_name}</div>
+                                <div className="text-sm text-gray-500">{stu.email}</div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              {stu.has_feedback ? (
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                  <span className="text-sm text-gray-600">
+                                    Feedback disponible
+                                    {stu.feedback_date && (
+                                      <div className="text-xs text-gray-400">
+                                        {new Date(stu.feedback_date).toLocaleDateString('fr-FR')}
+                                      </div>
+                                    )}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
+                                  <span className="text-sm text-gray-500">Aucun feedback</span>
+                                </div>
+                              )}
+                            </td>
                             <td className="px-4 py-2 text-right">
-                              <button
-                                onClick={() => analyzeStudent(stu.id)}
-                                className="btn-primary px-3 py-1 text-sm"
-                                disabled={isAnalyzing}
-                              >
-                                Analyser
-                              </button>
+                              <div className="flex justify-end space-x-2">
+                                {stu.has_feedback && (
+                                  <button
+                                    onClick={() => viewExistingFeedback(stu.id)}
+                                    className="btn-outline px-3 py-1 text-sm"
+                                    title="Voir le feedback existant"
+                                  >
+                                    Voir
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => analyzeStudent(stu.id)}
+                                  className="btn-primary px-3 py-1 text-sm"
+                                  disabled={isAnalyzing}
+                                  title={stu.has_feedback ? "Générer un nouveau feedback" : "Analyser l'étudiant"}
+                                >
+                                  {stu.has_feedback ? "Renouveler" : "Analyser"}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

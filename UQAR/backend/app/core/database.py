@@ -47,6 +47,8 @@ def create_tables():
     Créer toutes les tables dans la base de données.
     """
     try:
+        # Import all models to ensure they are registered
+        from ..models import User, Section, Document, Exercise, Question, ExerciseSubmission, ChatSession, ChatMessage, StudentFeedback
         Base.metadata.create_all(bind=engine)
         logger.info("Tables créées avec succès")
     except Exception as e:
